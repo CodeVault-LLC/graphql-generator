@@ -1,0 +1,14 @@
+{
+  "schema": "schema.json",
+  "output": {
+    "path": "output",
+    "filenames": {
+      "types": "gpl.d.ts",
+      "main": "gpl.ts"
+    }
+  },
+  "language": "typescript",
+  "languages": [
+    { "name": "typescript", "entrypoint": "languages/typescript/main.so" }
+  ]
+}
