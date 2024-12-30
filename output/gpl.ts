@@ -1,7 +1,6 @@
+import { requestMe, requestUser, requestProducts, requestProduct, requestNewsByProduct, requestNewsStatisticsByProductId, requestNewsById, requestLogin, requestCreateProduct, requestUpdateProduct, requestCreateNews, requestUpdateNews } from './resources';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { User, Token, ProductCategory, ProductStatus, Product, NewsState, News, NewsStatistics, } from './gpl.d';
-
-export const useMe = (selection: Partial<Record<keyof User, boolean>>, ) => {
+import { User, Product, News, NewsStatistics, Token } from './gpl.d';export const useMe = (selection: Partial<Record<keyof User, boolean>>, ) => {
   return useQuery<User>({
     queryKey: ['Me', selection],
     queryFn: async () => {
@@ -64,46 +63,46 @@ export const useNewsById = (selection: Partial<Record<keyof News, boolean>>, arg
   });
 };
 
-export const useLogin = (selection: Partial<Record<keyof Token, boolean>>, args: { email: string, password: string }) => {
-  return useMutation<Token>({
-    queryKey: ['Login', selection],
-    queryFn: async () => {
+export const useLogin = (selection: Partial<Record<keyof Token, boolean>>) => {
+  return useMutation<Token, unknown, { email: string, password: string }>({
+    mutationKey: ['Login', selection],
+    mutationFn: async (args) => {
       return await requestLogin(selection, args);
     },
   });
 };
 
-export const useCreateProduct = (selection: Partial<Record<keyof Product, boolean>>, args: { data: any }) => {
-  return useMutation<Product>({
-    queryKey: ['CreateProduct', selection],
-    queryFn: async () => {
+export const useCreateProduct = (selection: Partial<Record<keyof Product, boolean>>) => {
+  return useMutation<Product, unknown, { data: any }>({
+    mutationKey: ['CreateProduct', selection],
+    mutationFn: async (args) => {
       return await requestCreateProduct(selection, args);
     },
   });
 };
 
-export const useUpdateProduct = (selection: Partial<Record<keyof Product, boolean>>, args: { id: string, data: any }) => {
-  return useMutation<Product>({
-    queryKey: ['UpdateProduct', selection],
-    queryFn: async () => {
+export const useUpdateProduct = (selection: Partial<Record<keyof Product, boolean>>) => {
+  return useMutation<Product, unknown, { id: string, data: any }>({
+    mutationKey: ['UpdateProduct', selection],
+    mutationFn: async (args) => {
       return await requestUpdateProduct(selection, args);
     },
   });
 };
 
-export const useCreateNews = (selection: Partial<Record<keyof News, boolean>>, args: { productId: string, data: any }) => {
-  return useMutation<News>({
-    queryKey: ['CreateNews', selection],
-    queryFn: async () => {
+export const useCreateNews = (selection: Partial<Record<keyof News, boolean>>) => {
+  return useMutation<News, unknown, { productId: string, data: any }>({
+    mutationKey: ['CreateNews', selection],
+    mutationFn: async (args) => {
       return await requestCreateNews(selection, args);
     },
   });
 };
 
-export const useUpdateNews = (selection: Partial<Record<keyof News, boolean>>, args: { id: string, data: any }) => {
-  return useMutation<News>({
-    queryKey: ['UpdateNews', selection],
-    queryFn: async () => {
+export const useUpdateNews = (selection: Partial<Record<keyof News, boolean>>) => {
+  return useMutation<News, unknown, { id: string, data: any }>({
+    mutationKey: ['UpdateNews', selection],
+    mutationFn: async (args) => {
       return await requestUpdateNews(selection, args);
     },
   });

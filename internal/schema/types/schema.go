@@ -13,7 +13,7 @@ const (
 	ExperimentalSchemaFieldTypeQuery        ExperimentalSchemaFieldType = "Query"
 	ExperimentalSchemaFieldTypeType         ExperimentalSchemaFieldType = "OBJECT"
 	ExperimentalSchemaFieldTypeEnum         ExperimentalSchemaFieldType = "ENUM"
-	ExperimentalSchemaFieldTypeInput        ExperimentalSchemaFieldType = "Input"
+	ExperimentalSchemaFieldTypeInput        ExperimentalSchemaFieldType = "INPUT_OBJECT"
 	ExperimentalSchemaFieldTypeInterface    ExperimentalSchemaFieldType = "Interface"
 	ExperimentalSchemaFieldTypeUnion        ExperimentalSchemaFieldType = "Union"
 	ExperimentalSchemaFieldTypeSubscription ExperimentalSchemaFieldType = "Subscription"
@@ -119,6 +119,15 @@ func parseType(typeMap map[string]interface{}) (ExperimentalSchemaField, error) 
 	fields := []Field{}
 	if rawFields, ok := typeMap["fields"].([]interface{}); ok {
 		for _, rawField := range rawFields {
+			if fieldMap, ok := rawField.(map[string]interface{}); ok {
+				field := parseField(fieldMap)
+				fields = append(fields, field)
+			}
+		}
+	}
+
+	if rawInputFields, ok := typeMap["inputFields"].([]interface{}); ok {
+		for _, rawField := range rawInputFields {
 			if fieldMap, ok := rawField.(map[string]interface{}); ok {
 				field := parseField(fieldMap)
 				fields = append(fields, field)

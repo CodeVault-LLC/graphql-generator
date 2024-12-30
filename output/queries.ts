@@ -1,70 +1,70 @@
-export const meQuery = `query Me  {
+export const meQuery = `query Me {
   me {
     {{fields}}
   }
 }`;
 
-export const userQuery = `query User (id: "{{args.id}}") {
+export const userQuery = `query User {
   user(id: "{{args.id}}") {
     {{fields}}
   }
 }`;
 
-export const productsQuery = `query Products  {
+export const productsQuery = `query Products {
   products {
     {{fields}}
   }
 }`;
 
-export const productQuery = `query Product (id: "{{args.id}}") {
+export const productQuery = `query Product {
   product(id: "{{args.id}}") {
     {{fields}}
   }
 }`;
 
-export const newsByProductQuery = `query NewsByProduct (productId: "{{args.productId}}") {
+export const newsByProductQuery = `query NewsByProduct {
   newsByProduct(productId: "{{args.productId}}") {
     {{fields}}
   }
 }`;
 
-export const newsStatisticsByProductIdQuery = `query NewsStatisticsByProductId (productId: "{{args.productId}}") {
+export const newsStatisticsByProductIdQuery = `query NewsStatisticsByProductId {
   newsStatisticsByProductId(productId: "{{args.productId}}") {
     {{fields}}
   }
 }`;
 
-export const newsByIdQuery = `query NewsById (id: "{{args.id}}") {
+export const newsByIdQuery = `query NewsById {
   newsById(id: "{{args.id}}") {
     {{fields}}
   }
 }`;
 
-export const loginQuery = `mutation Login (email: "{{args.email}}", password: "{{args.password}}") {
+export const loginQuery = `mutation Login {
   login(email: "{{args.email}}", password: "{{args.password}}") {
     {{fields}}
   }
 }`;
 
-export const createProductQuery = `mutation CreateProduct (data: "{{args.data}}") {
+export const createProductQuery = `mutation CreateProduct {
   createProduct(data: "{{args.data}}") {
     {{fields}}
   }
 }`;
 
-export const updateProductQuery = `mutation UpdateProduct (id: "{{args.id}}", data: "{{args.data}}") {
+export const updateProductQuery = `mutation UpdateProduct {
   updateProduct(id: "{{args.id}}", data: "{{args.data}}") {
     {{fields}}
   }
 }`;
 
-export const createNewsQuery = `mutation CreateNews (productId: "{{args.productId}}", data: "{{args.data}}") {
+export const createNewsQuery = `mutation CreateNews {
   createNews(productId: "{{args.productId}}", data: "{{args.data}}") {
     {{fields}}
   }
 }`;
 
-export const updateNewsQuery = `mutation UpdateNews (id: "{{args.id}}", data: "{{args.data}}") {
+export const updateNewsQuery = `mutation UpdateNews {
   updateNews(id: "{{args.id}}", data: "{{args.data}}") {
     {{fields}}
   }

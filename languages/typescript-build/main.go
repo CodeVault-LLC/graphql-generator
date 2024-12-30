@@ -28,33 +28,29 @@ func GenerateDefinitions(config config.InternalConfig, schema types.Experimental
 // Helper function to write TypeScript definitions to a file
 func writeTypescriptDefinitions(outputDir string, schema *types.ExperimentalSchema) error {
 	generator := NewGenerator(*schema)
+	result := generator.Run()
 
-	typescriptDefinitions := generateTypeScriptDefinitions(schema)
-	generatedTanstackFunctions := generateTanstack(schema, generator)
-	indexContent := generateIndexFile(schema)
-	queries := generateQueries(generator)
-
-	err := writeTextFile(outputDir, "index.ts", indexContent)
+	err := writeTextFile(outputDir, "index.ts", result.IndexContent)
 	if err != nil {
 		return err
 	}
 
-	err = writeTextFile(outputDir, "queries.ts", queries)
+	err = writeTextFile(outputDir, "queries.ts", result.Queries)
 	if err != nil {
 		return err
 	}
 
-	err = writeTextFile(outputDir, "resources.ts", generateResources(generator))
+	err = writeTextFile(outputDir, "resources.ts", result.Resources)
 	if err != nil {
 		return err
 	}
 
-	err = writeTextFile(outputDir, "gpl.d.ts", typescriptDefinitions)
+	err = writeTextFile(outputDir, "gpl.d.ts", result.TypeScript)
 	if err != nil {
 		return err
 	}
 
-	err = writeTextFile(outputDir, "gpl.ts", generatedTanstackFunctions)
+	err = writeTextFile(outputDir, "gpl.ts", result.Tanstack)
 	if err != nil {
 		return err
 	}
@@ -89,11 +85,12 @@ func writeTextFile(outputDir string, filename string, content string) error {
 }
 
 // Helper function to generate TypeScript definitions from a GraphQL schema
-func generateTypeScriptDefinitions(schema *types.ExperimentalSchema) string {
+func generateTypeScriptDefinitions(generator *Generator) string {
 	var output strings.Builder
+	schema := generator.schema
 
 	for _, field := range schema.Fields {
-		if field.Type == types.ExperimentalSchemaFieldTypeType {
+		if field.Type == types.ExperimentalSchemaFieldTypeType || field.Type == types.ExperimentalSchemaFieldTypeInput {
 			for _, gqlType := range field.Types {
 				if gqlType.Description != "" {
 					output.WriteString(fmt.Sprintf("/* \n%s\n */\n", gqlType.Description))
@@ -120,33 +117,22 @@ func generateTypeScriptDefinitions(schema *types.ExperimentalSchema) string {
 	return output.String()
 }
 
-func generateTanstack(schema *types.ExperimentalSchema, gen *Generator) string {
+func generateTanstack(data string, gen *Generator) string {
 	var output strings.Builder
 
-	output.WriteString("import { useQuery, useMutation } from '@tanstack/react-query';\n")
-	output.WriteString("import { ")
-	for _, field := range schema.Fields {
-		if types.ExperimentalSchemaFieldType(field.Type) != types.ExperimentalSchemaFieldTypeType && types.ExperimentalSchemaFieldType(field.Type) != types.ExperimentalSchemaFieldTypeEnum {
-			continue
-		}
+	imports := gen.GetImports().GetImportsFromLocation(ImportLocationHooks)
+	output.WriteString(imports.ToImport())
 
-		for _, gqlType := range field.Types {
-			if isBlacklistedType(gqlType.Name) {
-				continue
-			}
-
-			output.WriteString(fmt.Sprintf("%s, ", gqlType.Name))
-		}
-	}
-	output.WriteString("} from './gpl.d';\n\n")
-
-	output.WriteString(gen.Run())
+	output.WriteString(data)
 
 	return output.String()
 }
 
 func generateQueries(gen *Generator) string {
 	var output strings.Builder
+
+	imports := gen.GetImports().GetImportsFromLocation(ImportLocationQueries)
+	output.WriteString(imports.ToImport())
 
 	for _, query := range gen.GetQuery() {
 		output.WriteString(query)
@@ -157,6 +143,9 @@ func generateQueries(gen *Generator) string {
 
 func generateResources(gen *Generator) string {
 	var output strings.Builder
+
+	imports := gen.GetImports().GetImportsFromLocation(ImportLocationResources)
+	output.WriteString(imports.ToImport())
 
 	for _, resource := range gen.GetResources() {
 		output.WriteString(resource)

@@ -7,38 +7,17 @@ import (
 	"github.com/codevault-llc/graphql-generator/internal/schema/types"
 )
 
-func (g *Generator) turnMutationIntoTanstackMutation(mutations types.ExperimentalSchemaField) (string, string, string) {
+func (g *Generator) turnMutationIntoTanstackMutation(mutations types.ExperimentalSchemaField) FunctionGeneratorResult {
 	var queryDefinitions string
 	var requestFunctions string
 	var hooks string
+	var imports ImportsSlice
 
 	for _, query := range mutations.Types[0].Fields {
 		name := strings.ToUpper(query.Name[:1]) + query.Name[1:]
 		queryName := query.Name
 
-		// Construct arguments for query
-		args := ""
-		argumentChecks := ""
-		argumentUsage := ""
-		argumentReplacements := ""
-
-		if len(query.Arguments) > 0 {
-			args = "args: { "
-			argumentUsage = "("
-			for i, arg := range query.Arguments {
-				args += fmt.Sprintf("%s: %s", arg.Name, mapGraphQLToTypeScript(arg.Type))
-				argumentChecks += fmt.Sprintf("if (!args.%s) throw new Error('%s is required.');\n", arg.Name, arg.Name)
-				argumentUsage += fmt.Sprintf("%s: \"{{args.%s}}\"", arg.Name, arg.Name)
-				argumentReplacements += fmt.Sprintf("query = query.replace('{{args.%s}}', args.%s);\n", arg.Name, arg.Name)
-
-				if i < len(query.Arguments)-1 {
-					args += ", "
-					argumentUsage += ", "
-				}
-			}
-			args += " }"
-			argumentUsage += ")"
-		}
+		arguments := g.buildArguments(query)
 
 		singularType := strings.Replace(mapGraphQLToTypeScript(query.Type), "[]", "", -1)
 		var argumentUsag string
@@ -49,14 +28,29 @@ func (g *Generator) turnMutationIntoTanstackMutation(mutations types.Experimenta
 			argumentUsag = ""
 		}
 
-		// Define query
-		queryDefinition := fmt.Sprintf(`export const %sQuery = `+"`"+`mutation %s %s {
+		var hasArgs string
+		if len(query.Arguments) > 0 {
+			hasArgs = "args"
+		} else {
+			hasArgs = ""
+		}
+
+		queryDefinition := fmt.Sprintf(`export const %sQuery = `+"`"+`mutation %s {
   %s%s {
     {{fields}}
   }
-}`+"`;", queryName, name, argumentUsage, queryName, argumentUsage)
+}`+"`;", queryName, name, queryName, arguments.ArgumentUsage)
 
-		// Define request function
+		imports.Connect(Imports{
+			Location: ImportLocationResources,
+			From:     ImportLocationTypes,
+			Value:    singularType,
+		}, Imports{
+			Location: ImportLocationResources,
+			From:     ImportLocationQueries,
+			Value:    fmt.Sprintf("%sQuery", queryName),
+		})
+
 		requestFunction := fmt.Sprintf(`export const request%s = async (selection: Partial<Record<keyof %s, boolean>>, %s) => {
   const fields = Object.entries(selection)
     .filter(([_, include]) => include)
@@ -71,22 +65,41 @@ func (g *Generator) turnMutationIntoTanstackMutation(mutations types.Experimenta
 
   const response = await graphqlRequest(query) as { %s: %s };
   return response.%s;
-};`, name, singularType, args, argumentChecks, argumentReplacements, queryName, queryName, singularType, queryName)
+};`, name, singularType, arguments.Arguments, arguments.ArgumentChecks, queryName, arguments.ArgumentReplacements, queryName, singularType, queryName)
 
-		// Define tanstack hook
-		tanstackHook := fmt.Sprintf(`export const use%s = (selection: Partial<Record<keyof %s, boolean>>, %s) => {
-  return useMutation<%s>({
-    queryKey: ['%s', selection],
-    queryFn: async () => {
+		imports.Connect(Imports{
+			Location: ImportLocationHooks,
+			From:     ImportLocationResources,
+			Value:    fmt.Sprintf("request%s", name),
+		}, Imports{
+			Location: ImportLocationHooks,
+			From:     "@tanstack/react-query",
+			Value:    "useMutation",
+		}, Imports{
+			Location: ImportLocationHooks,
+			From:     ImportLocationTypes,
+			Value:    singularType,
+		})
+
+		tanstackHook := fmt.Sprintf(`export const use%s = (selection: Partial<Record<keyof %s, boolean>>) => {
+  return useMutation<%s, unknown, %s>({
+    mutationKey: ['%s', selection],
+    mutationFn: async (%s) => {
       return await request%s(selection%s);
     },
   });
-};`, name, singularType, args, singularType, name, name, argumentUsag)
+};`, name, singularType, singularType, arguments.ArgumentTypes, name, hasArgs, name, argumentUsag)
 
 		queryDefinitions += queryDefinition + "\n\n"
 		requestFunctions += requestFunction + "\n\n"
 		hooks += tanstackHook + "\n\n"
 	}
 
-	return hooks, queryDefinitions, requestFunctions
+	return FunctionGeneratorResult{
+		QueryDefinition: queryDefinitions,
+		RequestFunction: requestFunctions,
+		Hooks:           hooks,
+
+		Imports: imports,
+	}
 }

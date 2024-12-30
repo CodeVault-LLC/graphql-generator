@@ -39,6 +39,26 @@ export interface Product {
   updatedAt: string;
 }
 
+export interface ProductCreateInput {
+  name: string;
+  description: string;
+  tagline: string;
+  public: boolean;
+  status: any;
+  category: any;
+  tags: string[];
+}
+
+export interface ProductUpdateInput {
+  name: string;
+  description: string;
+  tagline: string;
+  public: boolean;
+  status: any;
+  category: any;
+  tags: string[];
+}
+
 export interface News {
   id: string;
   title: string;
@@ -47,6 +67,18 @@ export interface News {
   createdAt: string;
   updatedAt: string;
   publishedAt: string;
+}
+
+export interface NewsCreateInput {
+  title: string;
+  content: string;
+  state: any;
+}
+
+export interface NewsUpdateInput {
+  title: string;
+  content: string;
+  state: any;
 }
 
 export interface NewsStatistics {
