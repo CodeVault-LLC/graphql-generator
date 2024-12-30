@@ -151,5 +151,19 @@ func generateResources(gen *Generator) string {
 		output.WriteString(resource)
 	}
 
+	output.WriteString("export const isFieldEnum = (field: string): boolean => {\n")
+	output.WriteString("  return [\n")
+
+	for _, field := range gen.schema.Fields {
+		if field.Type == types.ExperimentalSchemaFieldTypeEnum {
+			for _, gqlEnum := range field.Enums {
+				output.WriteString(fmt.Sprintf("    '%s',\n", gqlEnum.Name))
+			}
+		}
+	}
+	
+	output.WriteString("  ].includes(field);\n")
+	output.WriteString("};\n")
+
 	return output.String()
 }

@@ -74,6 +74,18 @@ func (g *Generator) turnQueryIntoTanstackQuery(queries types.ExperimentalSchemaF
 			Value:    singularType,
 		})
 
+		for _, arg := range arguments.SpecialArguments {
+			imports.Connect(Imports{
+				Location: ImportLocationResources,
+				From:     ImportLocationTypes,
+				Value:    arg,
+			}, Imports{
+				Location: ImportLocationHooks,
+				From:     ImportLocationTypes,
+				Value:    arg,
+			})
+		}
+
 		// Define tanstack hook
 		tanstackHook := fmt.Sprintf(`export const use%s = (selection: Partial<Record<keyof %s, boolean>>, %s) => {
   return useQuery<%s>({

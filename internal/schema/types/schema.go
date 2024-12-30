@@ -1,8 +1,14 @@
 package types
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"strings"
 )
 
 // ExperimentalSchemaFieldType represents the type of a GraphQL schema field.
@@ -80,8 +86,160 @@ type ExperimentalSchema struct {
 	Fields []ExperimentalSchemaField
 }
 
-// ParseSchemaFromJSON parses a GraphQL schema JSON file into an ExperimentalSchema structure.
-func ParseSchemaFromJSON(data []byte) (*ExperimentalSchema, error) {
+func ParseSchema(schemaLocation string) (*ExperimentalSchema, error) {
+	if strings.Contains(schemaLocation, ".json") {
+		file, err := os.Open(schemaLocation)
+		if err != nil {
+			panic(err)
+		}
+		defer file.Close()
+
+		fileInfo, _ := file.Stat()
+		schemaData := make([]byte, fileInfo.Size())
+		_, err = file.Read(schemaData)
+		if err != nil {
+			panic(err)
+		}
+
+		return parseSchemaFromJSON(schemaData)
+	}
+
+	return parseSchemaFromUrl(schemaLocation)
+}
+
+func parseSchemaFromUrl(url string) (*ExperimentalSchema, error) {
+	introspectionQuery := `query IntrospectionQuery {
+      __schema {
+
+        queryType { name }
+        mutationType { name }
+        subscriptionType { name }
+        types {
+          ...FullType
+        }
+        directives {
+          name
+          description
+
+          locations
+          args(includeDeprecated: true) {
+            ...InputValue
+          }
+        }
+      }
+    }
+
+    fragment FullType on __Type {
+      kind
+      name
+      description
+
+      fields(includeDeprecated: true) {
+        name
+        description
+        args(includeDeprecated: true) {
+          ...InputValue
+        }
+        type {
+          ...TypeRef
+        }
+        isDeprecated
+        deprecationReason
+      }
+      inputFields(includeDeprecated: true) {
+        ...InputValue
+      }
+      interfaces {
+        ...TypeRef
+      }
+      enumValues(includeDeprecated: true) {
+        name
+        description
+        isDeprecated
+        deprecationReason
+      }
+      possibleTypes {
+        ...TypeRef
+      }
+    }
+
+    fragment InputValue on __InputValue {
+      name
+      description
+      type { ...TypeRef }
+      defaultValue
+      isDeprecated
+      deprecationReason
+    }
+
+    fragment TypeRef on __Type {
+      kind
+      name
+      ofType {
+        kind
+        name
+        ofType {
+          kind
+          name
+          ofType {
+            kind
+            name
+            ofType {
+              kind
+              name
+              ofType {
+                kind
+                name
+                ofType {
+                  kind
+                  name
+                  ofType {
+                    kind
+                    name
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }`
+
+	payload := map[string]string{"query": introspectionQuery}
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode query: %w", err)
+	}
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("unexpected status: %s\n%s", resp.Status, string(body))
+	}
+
+	body := &bytes.Buffer{}
+	_, err = body.ReadFrom(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	return parseSchemaFromJSON(body.Bytes()[8 : len(body.Bytes())-2])
+}
+
+// parseSchemaFromJSON parses a GraphQL schema JSON file into an ExperimentalSchema structure.
+func parseSchemaFromJSON(data []byte) (*ExperimentalSchema, error) {
 	var rawSchema map[string]interface{}
 	if err := json.Unmarshal(data, &rawSchema); err != nil {
 		return nil, err
@@ -117,6 +275,8 @@ func parseType(typeMap map[string]interface{}) (ExperimentalSchemaField, error) 
 	description, _ := typeMap["description"].(string)
 
 	fields := []Field{}
+	enums := []Enum{}
+
 	if rawFields, ok := typeMap["fields"].([]interface{}); ok {
 		for _, rawField := range rawFields {
 			if fieldMap, ok := rawField.(map[string]interface{}); ok {
@@ -135,10 +295,26 @@ func parseType(typeMap map[string]interface{}) (ExperimentalSchemaField, error) 
 		}
 	}
 
+	if rawEnums, ok := typeMap["enumValues"].([]interface{}); ok {
+		enum := Enum{
+			Name:        name,
+			Description: description,
+		}
+
+		for _, rawEnum := range rawEnums {
+			if enumMap, ok := rawEnum.(map[string]interface{}); ok {
+				enum.Values = append(enum.Values, enumMap["name"].(string))
+			}
+		}
+
+		enums = append(enums, enum)
+	}
+
 	return ExperimentalSchemaField{
 		Name:        name,
 		Type:        ExperimentalSchemaFieldType(kind),
 		Types:       []Type{{Name: name, Fields: fields, Description: description}},
+		Enums:       enums,
 		Description: description,
 	}, nil
 }

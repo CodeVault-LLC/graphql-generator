@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/codevault-llc/graphql-generator/internal/schema/types"
@@ -77,16 +78,47 @@ func (g *Generator) buildArguments(query types.Field) GeneratorBuildArgumentsRes
 	argumentUsage := ""
 	argumentReplacements := ""
 	argumentTypes := ""
+	specialType := []string{}
+	enums := []string{}
 
 	if len(query.Arguments) > 0 {
+		for _, arg := range query.Arguments {
+			log.Println(*arg.Type.Name)
+			if isEnumType(arg.Type) {
+				enums = append(enums, arg.Name)
+			}
+		}
+
+		argumentReplacements += "const isEnumField = (field: string): boolean => {\n return [\n"
+		for _, enum := range enums {
+			argumentReplacements += fmt.Sprintf("'%s',\n", enum)
+		}
+		argumentReplacements += "].includes(field);\n};\n"
+
 		args = "args: { "
 		argumentUsage = "("
 		argumentTypes = "{ "
 		for i, arg := range query.Arguments {
 			args += fmt.Sprintf("%s: %s", arg.Name, mapGraphQLToTypeScript(arg.Type))
+
+			if isSpecialType(arg.Type) != "" {
+				specialType = append(specialType, isSpecialType(arg.Type))
+			}
+
 			argumentChecks += fmt.Sprintf("if (!args.%s) throw new Error('%s is required.');\n", arg.Name, arg.Name)
-			argumentUsage += fmt.Sprintf("%s: \"{{args.%s}}\"", arg.Name, arg.Name)
-			argumentReplacements += fmt.Sprintf("query = query.replace('{{args.%s}}', args.%s);\n", arg.Name, arg.Name)
+
+			if isSpecialType(arg.Type) == "" {
+				argumentUsage += fmt.Sprintf("%s: {{args.%s}}", arg.Name, arg.Name)
+				argumentReplacements += fmt.Sprintf("query = query.replace('{{args.%s}}', `\"${args.%s}\"`);\n", arg.Name, arg.Name)
+			} else if isEnumType(arg.Type) {
+				argumentUsage += fmt.Sprintf("%s: {{args.%s}}", arg.Name, arg.Name)
+				argumentReplacements += fmt.Sprintf("query = query.replace('{{args.%s}}', `${args.%s}`);\n", arg.Name, arg.Name)
+			} else {
+				argumentUsage += fmt.Sprintf("%s: { {{args.%s}} }", arg.Name, arg.Name)
+				argumentReplacements += fmt.Sprintf("const %sFields = Object.entries(args.%s)\n  .map(([key, value]) => {\n    if (isEnumField(key)) {\n      return `${key}: ${value}`;\n    }\n    return `${key}: ${JSON.stringify(value)}`;\n  })\n  .join(\", \");", arg.Name, arg.Name)
+				argumentReplacements += fmt.Sprintf("query = query.replace(\"{{args.data}}\", %sFields);\n", arg.Name)
+			}
+
 			argumentTypes += fmt.Sprintf("%s: %s", arg.Name, mapGraphQLToTypeScript(arg.Type))
 
 			if i < len(query.Arguments)-1 {
@@ -106,5 +138,6 @@ func (g *Generator) buildArguments(query types.Field) GeneratorBuildArgumentsRes
 		ArgumentUsage:        argumentUsage,
 		ArgumentReplacements: argumentReplacements,
 		ArgumentTypes:        argumentTypes,
+		SpecialArguments:     specialType,
 	}
 }

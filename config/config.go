@@ -31,7 +31,7 @@ type InternalConfig struct {
 
 // NewConfig creates a new configuration instance with defaults or from a file.
 func NewConfig() *InternalConfig {
-	config, err := OpenConfig("config.json")
+	config, err := OpenConfig("graphql-generator.conf.json")
 	if err != nil {
 		// Provide default values if the config file cannot be read or parsed
 		return &InternalConfig{

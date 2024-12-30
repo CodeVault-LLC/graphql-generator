@@ -1,8 +1,6 @@
 package schema
 
 import (
-	"os"
-
 	"github.com/codevault-llc/graphql-generator/internal/schema/types"
 )
 
@@ -17,20 +15,7 @@ func NewParser(schemaLocation string) *Parser {
 		SchemaLocation: schemaLocation,
 	}
 
-	file, err := os.Open(schemaLocation)
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
-
-	fileInfo, _ := file.Stat()
-	schemaData := make([]byte, fileInfo.Size())
-	_, err = file.Read(schemaData)
-	if err != nil {
-		panic(err)
-	}
-
-	parsedSchema, err := types.ParseSchemaFromJSON(schemaData)
+	parsedSchema, err := types.ParseSchema(schemaLocation)
 	if err != nil {
 		panic(err)
 	}

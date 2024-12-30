@@ -7,6 +7,12 @@ import (
 	"github.com/codevault-llc/graphql-generator/internal/schema/types"
 )
 
+type TypescriptType struct {
+	Nullable bool
+	IsEnum   bool
+	Value    string
+}
+
 // Helper function to map GraphQL types to TypeScript types
 func mapGraphQLToTypeScript(typeRef types.TypeReference) string {
 	switch typeRef.Kind {
@@ -25,13 +31,33 @@ func mapGraphQLToTypeScript(typeRef types.TypeReference) string {
 		}
 	case "OBJECT":
 		return *typeRef.Name
+	case "INPUT_OBJECT":
+		return *typeRef.Name
 	case "LIST":
 		return fmt.Sprintf("%s[]", mapGraphQLToTypeScript(*typeRef.OfType))
 	case "NON_NULL":
 		return mapGraphQLToTypeScript(*typeRef.OfType)
+	case "ENUM":
+		return *typeRef.Name
 	default:
 		return "any"
 	}
+}
+
+func getGraphQLTypeKind(typeRef types.TypeReference, typeWanted string) bool {
+	return typeRef.Kind == typeWanted || (typeRef.OfType != nil && typeRef.OfType.Kind == typeWanted) || (typeRef.OfType != nil && typeRef.OfType.OfType != nil && typeRef.OfType.OfType.Kind == typeWanted)
+}
+
+func isSpecialType(typeRef types.TypeReference) string {
+	if getGraphQLTypeKind(typeRef, "OBJECT") || getGraphQLTypeKind(typeRef, "INPUT_OBJECT") {
+		return mapGraphQLToTypeScript(typeRef)
+	}
+
+	return ""
+}
+
+func isEnumType(typeRef types.TypeReference) bool {
+	return getGraphQLTypeKind(typeRef, "ENUM")
 }
 
 type FunctionGeneratorResult struct {
@@ -56,6 +82,7 @@ type GeneratorBuildArgumentsResult struct {
 	ArgumentUsage        string
 	ArgumentReplacements string
 	ArgumentTypes        string
+	SpecialArguments     []string
 }
 
 type Imports struct {

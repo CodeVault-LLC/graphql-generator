@@ -51,6 +51,18 @@ func (g *Generator) turnMutationIntoTanstackMutation(mutations types.Experimenta
 			Value:    fmt.Sprintf("%sQuery", queryName),
 		})
 
+		for _, arg := range arguments.SpecialArguments {
+			imports.Connect(Imports{
+				Location: ImportLocationResources,
+				From:     ImportLocationTypes,
+				Value:    arg,
+			}, Imports{
+				Location: ImportLocationHooks,
+				From:     ImportLocationTypes,
+				Value:    arg,
+			})
+		}
+
 		requestFunction := fmt.Sprintf(`export const request%s = async (selection: Partial<Record<keyof %s, boolean>>, %s) => {
   const fields = Object.entries(selection)
     .filter(([_, include]) => include)
