@@ -13,13 +13,13 @@ func GenerateDefinitions(config config.InternalConfig, schema types.Experimental
 	if _, err := os.Stat(config.Output.Path); os.IsNotExist(err) {
 		err := os.MkdirAll(config.Output.Path, 0755)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to create output directory %s: %w", config.Output.Path, err)
 		}
 	}
 
 	err := writeTypescriptDefinitions(config.Output.Path, &schema)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to write TypeScript definitions: %w", err)
 	}
 
 	return nil
@@ -72,13 +72,13 @@ func generateIndexFile(_ *types.ExperimentalSchema) string {
 func writeTextFile(outputDir string, filename string, content string) error {
 	file, err := os.Create(fmt.Sprintf("%s/%s", outputDir, filename))
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create file %s/%s: %w", outputDir, filename, err)
 	}
 	defer file.Close()
 
 	_, err = file.WriteString(content)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to write to file %s/%s: %w", outputDir, filename, err)
 	}
 
 	return nil
@@ -87,6 +87,7 @@ func writeTextFile(outputDir string, filename string, content string) error {
 // Helper function to generate TypeScript definitions from a GraphQL schema
 func generateTypeScriptDefinitions(generator *Generator) string {
 	var output strings.Builder
+
 	schema := generator.schema
 
 	for _, field := range schema.Fields {
@@ -95,20 +96,29 @@ func generateTypeScriptDefinitions(generator *Generator) string {
 				if gqlType.Description != "" {
 					output.WriteString(fmt.Sprintf("/* \n%s\n */\n", gqlType.Description))
 				}
+
 				output.WriteString(fmt.Sprintf("export interface %s {\n", gqlType.Name))
+
 				for _, gqlField := range gqlType.Fields {
 					tsType := mapGraphQLToTypeScript(gqlField.Type)
-					output.WriteString(fmt.Sprintf("  %s: %s;\n", gqlField.Name, tsType))
+					if tsType.Nullable {
+						tsType.Value = tsType.Value + " | null"
+					}
+
+					output.WriteString(fmt.Sprintf("  %s: %s;\n", gqlField.Name, tsType.Value))
 				}
+
 				output.WriteString("}\n\n")
 			}
 		} else if field.Type == types.ExperimentalSchemaFieldTypeEnum {
 			for _, gqlEnum := range field.Enums {
 				output.WriteString(fmt.Sprintf("/* \n%s\n */\n", gqlEnum.Description))
 				output.WriteString(fmt.Sprintf("export enum %s {\n", gqlEnum.Name))
+
 				for _, gqlEnumValue := range gqlEnum.Values {
 					output.WriteString(fmt.Sprintf("  %s = \"%s\",\n", gqlEnumValue, gqlEnumValue))
 				}
+
 				output.WriteString("}\n\n")
 			}
 		}
@@ -161,7 +171,7 @@ func generateResources(gen *Generator) string {
 			}
 		}
 	}
-	
+
 	output.WriteString("  ].includes(field);\n")
 	output.WriteString("};\n")
 

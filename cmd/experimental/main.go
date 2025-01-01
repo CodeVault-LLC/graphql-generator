@@ -1,8 +1,7 @@
 package main
 
 import (
-	"fmt"
-	"os"
+	"log"
 
 	"github.com/codevault-llc/graphql-generator/config"
 	"github.com/codevault-llc/graphql-generator/internal/languages"
@@ -16,8 +15,8 @@ func main() {
 
 	languageModule := languages.NewLanguageModule(*config)
 	err := languageModule.Execute(config.Language, *config, *parser.Schema)
+
 	if err != nil {
-		fmt.Printf("Error executing language module: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("Error executing language module: %v\n", err)
 	}
 }

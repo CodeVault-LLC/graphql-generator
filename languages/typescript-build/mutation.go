@@ -9,8 +9,11 @@ import (
 
 func (g *Generator) turnMutationIntoTanstackMutation(mutations types.ExperimentalSchemaField) FunctionGeneratorResult {
 	var queryDefinitions string
+
 	var requestFunctions string
+
 	var hooks string
+
 	var imports ImportsSlice
 
 	for _, query := range mutations.Types[0].Fields {
@@ -19,7 +22,8 @@ func (g *Generator) turnMutationIntoTanstackMutation(mutations types.Experimenta
 
 		arguments := g.buildArguments(query)
 
-		singularType := strings.Replace(mapGraphQLToTypeScript(query.Type), "[]", "", -1)
+		singularType := strings.Replace(mapGraphQLToTypeScript(query.Type).Value, "[]", "", -1)
+
 		var argumentUsag string
 
 		if len(query.Arguments) > 0 {
@@ -48,7 +52,7 @@ func (g *Generator) turnMutationIntoTanstackMutation(mutations types.Experimenta
 		}, Imports{
 			Location: ImportLocationResources,
 			From:     ImportLocationQueries,
-			Value:    fmt.Sprintf("%sQuery", queryName),
+			Value:    queryName + "Query",
 		})
 
 		for _, arg := range arguments.SpecialArguments {
@@ -82,7 +86,7 @@ func (g *Generator) turnMutationIntoTanstackMutation(mutations types.Experimenta
 		imports.Connect(Imports{
 			Location: ImportLocationHooks,
 			From:     ImportLocationResources,
-			Value:    fmt.Sprintf("request%s", name),
+			Value:    "request" + name,
 		}, Imports{
 			Location: ImportLocationHooks,
 			From:     "@tanstack/react-query",

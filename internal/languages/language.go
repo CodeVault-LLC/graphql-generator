@@ -14,10 +14,12 @@ type LanguageModule struct {
 
 func NewLanguageModule(config config.InternalConfig) *LanguageModule {
 	var languages = map[string]Plugin{}
+
 	for _, language := range config.Languages {
 		plugin := NewPlugin(language.Entrypoint)
 		if plugin != nil {
 			log.Printf("Loaded plugin for language: %s\n", language.Name)
+
 			languages[language.Name] = *plugin
 		}
 	}

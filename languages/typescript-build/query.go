@@ -9,8 +9,11 @@ import (
 
 func (g *Generator) turnQueryIntoTanstackQuery(queries types.ExperimentalSchemaField) FunctionGeneratorResult {
 	var queryDefinitions string
+
 	var requestFunctions string
+
 	var hooks string
+
 	var imports ImportsSlice
 
 	for _, query := range queries.Types[0].Fields {
@@ -19,7 +22,7 @@ func (g *Generator) turnQueryIntoTanstackQuery(queries types.ExperimentalSchemaF
 
 		arguments := g.buildArguments(query)
 
-		singularType := strings.Replace(mapGraphQLToTypeScript(query.Type), "[]", "", -1)
+		singularType := strings.Replace(mapGraphQLToTypeScript(query.Type).Value, "[]", "", -1)
 
 		var argumentUsag string
 		if len(query.Arguments) > 0 {

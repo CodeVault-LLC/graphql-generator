@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/codevault-llc/graphql-generator/internal/schema/types"
@@ -23,8 +22,11 @@ func NewGenerator(schema types.ExperimentalSchema) *Generator {
 
 func (g *Generator) Run() GeneratorResults {
 	var output strings.Builder
+
 	var query []string
+
 	var resources []string
+
 	var imports ImportsSlice
 
 	for _, field := range g.schema.Fields {
@@ -83,7 +85,6 @@ func (g *Generator) buildArguments(query types.Field) GeneratorBuildArgumentsRes
 
 	if len(query.Arguments) > 0 {
 		for _, arg := range query.Arguments {
-			log.Println(*arg.Type.Name)
 			if isEnumType(arg.Type) {
 				enums = append(enums, arg.Name)
 			}
@@ -93,13 +94,19 @@ func (g *Generator) buildArguments(query types.Field) GeneratorBuildArgumentsRes
 		for _, enum := range enums {
 			argumentReplacements += fmt.Sprintf("'%s',\n", enum)
 		}
+
 		argumentReplacements += "].includes(field);\n};\n"
 
 		args = "args: { "
 		argumentUsage = "("
 		argumentTypes = "{ "
-		for i, arg := range query.Arguments {
-			args += fmt.Sprintf("%s: %s", arg.Name, mapGraphQLToTypeScript(arg.Type))
+
+		for ilen, arg := range query.Arguments {
+			if mapGraphQLToTypeScript(arg.Type).Nullable {
+				args += fmt.Sprintf("%s: %s | null", arg.Name, mapGraphQLToTypeScript(arg.Type).Value)
+			} else {
+				args += fmt.Sprintf("%s: %s", arg.Name, mapGraphQLToTypeScript(arg.Type).Value)
+			}
 
 			if isSpecialType(arg.Type) != "" {
 				specialType = append(specialType, isSpecialType(arg.Type))
@@ -119,14 +126,19 @@ func (g *Generator) buildArguments(query types.Field) GeneratorBuildArgumentsRes
 				argumentReplacements += fmt.Sprintf("query = query.replace(\"{{args.data}}\", %sFields);\n", arg.Name)
 			}
 
-			argumentTypes += fmt.Sprintf("%s: %s", arg.Name, mapGraphQLToTypeScript(arg.Type))
+			if mapGraphQLToTypeScript(arg.Type).Nullable {
+				argumentTypes += fmt.Sprintf("%s: %s | null", arg.Name, mapGraphQLToTypeScript(arg.Type).Value)
+			} else {
+				argumentTypes += fmt.Sprintf("%s: %s", arg.Name, mapGraphQLToTypeScript(arg.Type).Value)
+			}
 
-			if i < len(query.Arguments)-1 {
+			if ilen < len(query.Arguments)-1 {
 				args += ", "
 				argumentUsage += ", "
 				argumentTypes += ", "
 			}
 		}
+
 		args += " }"
 		argumentUsage += ")"
 		argumentTypes += " }"

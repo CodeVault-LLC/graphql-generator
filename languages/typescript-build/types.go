@@ -14,34 +14,38 @@ type TypescriptType struct {
 }
 
 // Helper function to map GraphQL types to TypeScript types
-func mapGraphQLToTypeScript(typeRef types.TypeReference) string {
-	switch typeRef.Kind {
-	case "SCALAR":
-		switch *typeRef.Name {
-		case "String":
-			return "string"
-		case "ID":
-			return "string"
-		case "Int", "Float":
-			return "number"
-		case "Boolean":
-			return "boolean"
+func mapGraphQLToTypeScript(typeRef types.TypeReference) TypescriptType {
+	// Recursive function to map types
+	var helper func(typeRef types.TypeReference, nullable bool) TypescriptType
+	helper = func(typeRef types.TypeReference, nullable bool) TypescriptType {
+		switch typeRef.Kind {
+		case "SCALAR":
+			switch *typeRef.Name {
+			case "String", "ID":
+				return TypescriptType{Nullable: nullable, IsEnum: false, Value: "string"}
+			case "Int", "Float":
+				return TypescriptType{Nullable: nullable, IsEnum: false, Value: "number"}
+			case "Boolean":
+				return TypescriptType{Nullable: nullable, IsEnum: false, Value: "boolean"}
+			default:
+				return TypescriptType{Nullable: nullable, IsEnum: false, Value: "any"}
+			}
+		case "OBJECT", "INPUT_OBJECT":
+			return TypescriptType{Nullable: nullable, IsEnum: false, Value: *typeRef.Name}
+		case "LIST":
+			innerType := helper(*typeRef.OfType, true) // Lists can have nullable items
+			return TypescriptType{Nullable: nullable, IsEnum: false, Value: innerType.Value + "[]"}
+		case "NON_NULL":
+			return helper(*typeRef.OfType, false) // Mark as non-nullable
+		case "ENUM":
+			return TypescriptType{Nullable: nullable, IsEnum: true, Value: *typeRef.Name}
 		default:
-			return "any"
+			return TypescriptType{Nullable: nullable, IsEnum: false, Value: "any"}
 		}
-	case "OBJECT":
-		return *typeRef.Name
-	case "INPUT_OBJECT":
-		return *typeRef.Name
-	case "LIST":
-		return fmt.Sprintf("%s[]", mapGraphQLToTypeScript(*typeRef.OfType))
-	case "NON_NULL":
-		return mapGraphQLToTypeScript(*typeRef.OfType)
-	case "ENUM":
-		return *typeRef.Name
-	default:
-		return "any"
 	}
+
+	// Start recursion assuming nullable by default
+	return helper(typeRef, true)
 }
 
 func getGraphQLTypeKind(typeRef types.TypeReference, typeWanted string) bool {
@@ -50,7 +54,7 @@ func getGraphQLTypeKind(typeRef types.TypeReference, typeWanted string) bool {
 
 func isSpecialType(typeRef types.TypeReference) string {
 	if getGraphQLTypeKind(typeRef, "OBJECT") || getGraphQLTypeKind(typeRef, "INPUT_OBJECT") {
-		return mapGraphQLToTypeScript(typeRef)
+		return mapGraphQLToTypeScript(typeRef).Value
 	}
 
 	return ""
@@ -131,12 +135,15 @@ func (i ImportsSlice) ToImport() string {
 func (i *ImportsSlice) Connect(imports ...Imports) {
 	for _, imp := range imports {
 		exists := false
+
 		for _, existingImp := range *i {
 			if existingImp.Location == imp.Location && existingImp.Value == imp.Value {
 				exists = true
+
 				break
 			}
 		}
+
 		if !exists {
 			*i = append(*i, imp)
 		}
@@ -145,6 +152,7 @@ func (i *ImportsSlice) Connect(imports ...Imports) {
 
 func (i ImportsSlice) GetImportsFromLocation(location ImportLocation) ImportsSlice {
 	var imports ImportsSlice
+
 	for _, imp := range i {
 		if imp.Location == location {
 			imports = append(imports, imp)

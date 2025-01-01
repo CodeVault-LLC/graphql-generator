@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -97,6 +97,7 @@ func ParseSchema(schemaLocation string) (*ExperimentalSchema, error) {
 		fileInfo, _ := file.Stat()
 		schemaData := make([]byte, fileInfo.Size())
 		_, err = file.Read(schemaData)
+
 		if err != nil {
 			panic(err)
 		}
@@ -207,6 +208,7 @@ func parseSchemaFromUrl(url string) (*ExperimentalSchema, error) {
 
 	payload := map[string]string{"query": introspectionQuery}
 	payloadBytes, err := json.Marshal(payload)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode query: %w", err)
 	}
@@ -215,22 +217,27 @@ func parseSchemaFromUrl(url string) (*ExperimentalSchema, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
+
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute request: %w", err)
 	}
+
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		return nil, fmt.Errorf("unexpected status: %s\n%s", resp.Status, string(body))
 	}
 
 	body := &bytes.Buffer{}
+
 	_, err = body.ReadFrom(resp.Body)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
@@ -242,7 +249,7 @@ func parseSchemaFromUrl(url string) (*ExperimentalSchema, error) {
 func parseSchemaFromJSON(data []byte) (*ExperimentalSchema, error) {
 	var rawSchema map[string]interface{}
 	if err := json.Unmarshal(data, &rawSchema); err != nil {
-		return nil, err
+		return nil, errors.New("failed to unmarshal JSON")
 	}
 
 	schemaData, ok := rawSchema["__schema"].(map[string]interface{})
@@ -259,17 +266,15 @@ func parseSchemaFromJSON(data []byte) (*ExperimentalSchema, error) {
 
 	for _, t := range types {
 		if typeMap, ok := t.(map[string]interface{}); ok {
-			field, err := parseType(typeMap)
-			if err == nil {
-				fields = append(fields, field)
-			}
+			field := parseType(typeMap)
+			fields = append(fields, field)
 		}
 	}
 
 	return &ExperimentalSchema{Fields: fields}, nil
 }
 
-func parseType(typeMap map[string]interface{}) (ExperimentalSchemaField, error) {
+func parseType(typeMap map[string]interface{}) ExperimentalSchemaField {
 	name, _ := typeMap["name"].(string)
 	kind, _ := typeMap["kind"].(string)
 	description, _ := typeMap["description"].(string)
@@ -316,7 +321,7 @@ func parseType(typeMap map[string]interface{}) (ExperimentalSchemaField, error) 
 		Types:       []Type{{Name: name, Fields: fields, Description: description}},
 		Enums:       enums,
 		Description: description,
-	}, nil
+	}
 }
 
 func parseField(fieldMap map[string]interface{}) Field {
@@ -326,6 +331,7 @@ func parseField(fieldMap map[string]interface{}) Field {
 	deprecationReason, _ := fieldMap["deprecationReason"].(string)
 
 	typeRef := parseTypeReference(fieldMap["type"].(map[string]interface{}))
+
 	arguments := []Argument{}
 	if rawArgs, ok := fieldMap["args"].([]interface{}); ok {
 		for _, rawArg := range rawArgs {
@@ -349,6 +355,7 @@ func parseArgument(argMap map[string]interface{}) Argument {
 	name, _ := argMap["name"].(string)
 	description, _ := argMap["description"].(string)
 	typeRef := parseTypeReference(argMap["type"].(map[string]interface{}))
+
 	var defaultValue *string
 	if rawDefault, ok := argMap["defaultValue"].(string); ok {
 		defaultValue = &rawDefault
@@ -364,7 +371,9 @@ func parseArgument(argMap map[string]interface{}) Argument {
 
 func parseTypeReference(typeMap map[string]interface{}) TypeReference {
 	kind, _ := typeMap["kind"].(string)
+
 	name, _ := typeMap["name"].(string)
+
 	ofType := (*TypeReference)(nil)
 	if rawOfType, ok := typeMap["ofType"].(map[string]interface{}); ok {
 		ofTypeRef := parseTypeReference(rawOfType)

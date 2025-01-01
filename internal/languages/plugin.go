@@ -1,7 +1,7 @@
 package languages
 
 import (
-	"fmt"
+	"log"
 	"plugin"
 
 	"github.com/codevault-llc/graphql-generator/config"
@@ -17,19 +17,22 @@ type Plugin struct {
 func NewPlugin(entrypoint string) *Plugin {
 	plug, err := plugin.Open(entrypoint)
 	if err != nil {
-		fmt.Printf("Error loading plugin: %v\n", err)
+		log.Fatalf("Error loading plugin: %v\n", err)
+
 		return nil
 	}
 
 	symGenerateDefinitions, err := plug.Lookup("GenerateDefinitions")
 	if err != nil {
-		fmt.Printf("Error looking up GenerateDefinitions: %v\n", err)
+		log.Fatalf("Error loading GenerateDefinitions symbol: %v\n", err)
+
 		return nil
 	}
 
 	generateDefinitions, ok := symGenerateDefinitions.(func(config.InternalConfig, types.ExperimentalSchema) error)
 	if !ok {
-		fmt.Printf("Error asserting GenerateDefinitions function signature\n")
+		log.Fatalf("Error casting GenerateDefinitions symbol: %v\n", err)
+
 		return nil
 	}
 
