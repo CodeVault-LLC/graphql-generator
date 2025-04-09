@@ -1,5 +1,18 @@
 {
-  "getting_started": {
-    "introduction": "getting-started/introduction.mdx"
-  }
+  "branches": {
+    "production": "master",
+    "branch_list": ["master"]
+  },
+  "navigation": [
+    {
+      "title": "Getting Started",
+      "path": "getting-started",
+      "children": [
+        {
+          "title": "Introduction",
+          "path": "introduction"
+        }
+      ]
+    }
+  ]
 }
