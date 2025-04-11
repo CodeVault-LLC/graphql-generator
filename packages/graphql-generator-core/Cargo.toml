@@ -7,4 +7,6 @@ edition = "2021"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 once_cell = "1.18"
-clap = "4.5.35"
+clap = { version = "4.5.35" }
+graphql-parser = "0.4.1"
+clap_derive = "=4.5.32"

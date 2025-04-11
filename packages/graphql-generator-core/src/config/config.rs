@@ -5,9 +5,14 @@ use once_cell::sync::Lazy;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
-    pub api_url: String,
-    pub output_dir: String,
-    pub enable_logging: bool,
+    pub schema: String,
+    pub output: String,
+    pub plugin: String,
+}
+
+pub enum SchemaSource {
+    File(String),
+    Http(String),
 }
 
 pub static CONFIG: Lazy<Config> = Lazy::new(|| {

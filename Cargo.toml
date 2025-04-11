@@ -1,0 +1,11 @@
+[workspace]
+members = [
+	"packages/graphql-generator-core",
+	"packages/graphql-generator-plugins/graphqlgen-apollo"
+]
+
+[profile.dev]
+opt-level = 0
+
+[profile.release]
+opt-level = 3
