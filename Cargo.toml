@@ -1,8 +1,13 @@
 [workspace]
-members = [
-	"packages/graphql-generator-core",
-	"packages/graphql-generator-plugins/graphqlgen-apollo"
-]
+members = ["crates/*"]
+resolvers = "2"
+
+[workspace.package]
+edition = "2021"
+authors = ["Lukas Olsen <lukasolsen@users.noreply.github.com>"]
+license = "Apache-2.0"
+version = "0.1.0"
+repository = "github.com/codevaultllc/graphql-generator"
 
 [profile.dev]
 opt-level = 0

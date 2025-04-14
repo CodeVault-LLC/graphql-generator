@@ -2,6 +2,8 @@ use std::{fs, path};
 use std::io::{self, BufRead, Read};
 use serde::Deserialize;
 
+mod generator;
+
 #[derive(Deserialize)]
 struct ParsedSchema {
     source: String,
@@ -36,6 +38,11 @@ fn main() {
         .to_path_buf();
 
     fs::create_dir_all(&output_dir).expect("Failed to create output dir");
+
+    generator::apollo_config::generate_apollo_config(&output)
+        .expect("Failed to generate Apollo config");
+
+    generator::apollo_queries::generate_apollo_queries(&output, &schema).expect("Failed to generate Apollo queries");
 
     let file_path = output_dir.join("generated_apollo.ts");
 
