@@ -8,6 +8,12 @@ pub struct Document {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Definition {
     Type(TypeDef),
+    Scalar(ScalarDef),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScalarDef {
+    pub name: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -22,6 +28,15 @@ pub struct Field {
     pub field_type: TypeRef,
 
     // For query and mutation fields (optional)
+    pub arguments: Option<Vec<InputValue>>,
+
+    // For object fields (optional)
+    pub directives: Option<Vec<Directive>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Directive {
+    pub name: String,
     pub arguments: Option<Vec<InputValue>>,
 }
 

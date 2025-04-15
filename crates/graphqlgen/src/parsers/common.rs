@@ -1,5 +1,7 @@
 use anyhow::{anyhow, Result};
-use graphqlgen_schema::ast::{Definition, Document, Field, InputValue, TypeDef, TypeRef};
+use graphqlgen_schema::ast::{
+    Definition, Directive, Document, Field, InputValue, ScalarDef, TypeDef, TypeRef,
+};
 
 use super::token::Token;
 
@@ -77,7 +79,8 @@ pub fn parse_document(tokens: Vec<Token>) -> Result<Document> {
                                     args.push(Field {
                                         name: arg_name,
                                         field_type: arg_type,
-                                        arguments: None,
+                                        arguments: None, // Arguments for the argument itself (if any)
+                                        directives: None, // Directives for the argument (if any)
                                     });
                                 }
 
@@ -101,6 +104,29 @@ pub fn parse_document(tokens: Vec<Token>) -> Result<Document> {
                             let (type_ref, consumed) = parse_type_ref(&tokens[index..])?;
                             index += consumed;
 
+                            let mut directives = Vec::new();
+
+                            while tokens.get(index) == Some(&Token::At) {
+                                index += 1;
+
+                                let directive_name = match tokens.get(index) {
+                                    Some(Token::Name(n)) => n.clone(),
+                                    other => {
+                                        return Err(anyhow!(
+                                            "Expected directive name, got {:?}",
+                                            other
+                                        ))
+                                    }
+                                };
+                                index += 1;
+
+                                // Optionally support arguments later here...
+                                directives.push(Directive {
+                                    name: directive_name,
+                                    arguments: None,
+                                });
+                            }
+
                             fields.push(Field {
                                 name,
                                 field_type: type_ref,
@@ -112,6 +138,11 @@ pub fn parse_document(tokens: Vec<Token>) -> Result<Document> {
                                         })
                                         .collect()
                                 }),
+                                directives: if directives.is_empty() {
+                                    None
+                                } else {
+                                    Some(directives)
+                                },
                             });
                         }
 
@@ -133,6 +164,19 @@ pub fn parse_document(tokens: Vec<Token>) -> Result<Document> {
                     fields,
                 }));
             }
+
+            Token::Name(name) if name == "scalar" => {
+                index += 1;
+
+                let scalar_name: String = match tokens.get(index) {
+                    Some(Token::Name(name)) => name.clone(),
+                    other => return Err(anyhow!("Expected scalar name, got {:?}", other)),
+                };
+                index += 1;
+
+                definitions.push(Definition::Scalar(ScalarDef { name: scalar_name }));
+            }
+
             _ => index += 1, // Skip unrelated tokens (e.g. comments or extra whitespace)
         }
     }
