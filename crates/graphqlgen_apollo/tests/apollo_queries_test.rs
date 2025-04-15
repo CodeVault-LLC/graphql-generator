@@ -15,6 +15,8 @@ mod apollo_queries_tests {
                 .map(|f| Field {
                     name: f.to_string(),
                     field_type: TypeRef::Named("String".to_string()),
+                    arguments: None,
+                    directives: None,
                 })
                 .collect(),
         }
