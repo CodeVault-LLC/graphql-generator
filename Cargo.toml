@@ -1,6 +1,6 @@
 [workspace]
 members = ["crates/*"]
-resolvers = "2"
+resolver = "2"
 
 [workspace.package]
 edition = "2021"
@@ -14,3 +14,4 @@ opt-level = 0
 
 [profile.release]
 opt-level = 3
+

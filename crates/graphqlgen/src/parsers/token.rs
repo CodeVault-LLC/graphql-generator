@@ -1,0 +1,25 @@
+#[derive(Debug, Clone, PartialEq)]
+pub enum Token {
+    Name(String),
+    Int(i64),
+    Float(f64),
+    String(String),
+    Boolean(bool),
+    Null,
+
+    BraceOpen,
+    BraceClose,
+    ParenOpen,
+    ParenClose,
+    BracketOpen,
+    BracketClose,
+    Colon,
+    Equals,
+    At,
+    Ellipsis,
+    Dollar,
+    Bang,
+    Pipe,
+    Ampersand,
+    EOF,
+}

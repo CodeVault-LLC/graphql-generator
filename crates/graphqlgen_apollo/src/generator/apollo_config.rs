@@ -29,17 +29,13 @@ root.render(
 );
 */"#;
 
-pub fn generate_apollo_config(
-    output: &str,
-) -> Result<(), Box<dyn std::error::Error>> {
-    let output_dir = std::path::Path::new(output)
-        .parent()
-        .expect("Failed to get parent directory")
-        .to_path_buf();
+pub fn generate_apollo_config(output: String) -> Result<(), Box<dyn std::error::Error>> {
+    let file_path = std::path::Path::new(&output).join("apollo-client.ts");
 
-    std::fs::create_dir_all(&output_dir).expect("Failed to create output dir");
-
-    let file_path = output_dir.join("apollo-client.ts");
+    if !file_path.exists() {
+        std::fs::create_dir_all(file_path.parent().unwrap())
+            .expect("Failed to create output directory");
+    }
 
     std::fs::write(&file_path, APOLLO_CONFIG_STRING).expect("Failed to write output file");
 

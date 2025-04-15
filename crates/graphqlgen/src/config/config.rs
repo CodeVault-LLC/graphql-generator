@@ -1,7 +1,7 @@
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
-use once_cell::sync::Lazy;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
@@ -10,14 +10,8 @@ pub struct Config {
     pub plugin: String,
 }
 
-pub enum SchemaSource {
-    File(String),
-    Http(String),
-}
-
-pub static CONFIG: Lazy<Config> = Lazy::new(|| {
-    Config::load_from_file("graphql-gen.json").expect("Failed to load configuration")
-});
+pub static CONFIG: Lazy<Config> =
+    Lazy::new(|| Config::load_from_file("graphql-gen.json").expect("Failed to load configuration"));
 
 impl Config {
     pub fn load_from_file<P: AsRef<Path>>(path: P) -> Result<Self, Box<dyn std::error::Error>> {
