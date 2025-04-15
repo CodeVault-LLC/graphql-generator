@@ -1,0 +1,22 @@
+# Using a plugin
+
+To use a plugin, install it alongside GraphQL Gen:
+
+```bash
+npm install -D graphql-gen-plugin-apollo
+```
+
+Then specify the plugin in your graphql-gen.json config:
+
+```json
+{
+  "schema": "http://localhost:4000/graphql",
+  "output": "./src/__generated__",
+  "plugin": "apollo"
+}
+```
+
+<Alert type="note" title="Aliases for Plugins">
+  Plugin names can be shorthand ("apollo") or full package names
+  ("graphql-gen-plugin-apollo"). Aliases are automatically resolved.
+</Alert>
