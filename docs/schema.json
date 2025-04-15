@@ -11,6 +11,24 @@
         {
           "title": "Introduction",
           "path": "introduction"
+        },
+        {
+          "title": "Installation",
+          "path": "installation"
+        }
+      ]
+    },
+    {
+      "title": "Plugins",
+      "path": "plugins",
+      "children": [
+        {
+          "title": "Overview",
+          "path": "overview"
+        },
+        {
+          "title": "Plugin Usage",
+          "path": "usage"
         }
       ]
     }

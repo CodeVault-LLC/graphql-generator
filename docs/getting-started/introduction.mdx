@@ -1,96 +1,72 @@
-# Introduction to GraphQL Code Generator
+# Welcome to GraphQL Gen
 
-<Alert type="caution" title="Under Maintenance">
-  This document is still under construction. The content may not be complete or
-  fully accurate. Please check back later for updates.
-</Alert>
+**GraphQL Gen** is a lightweight, plugin-based code generation tool designed to convert your GraphQL schema into a Rust-compatible Abstract Syntax Tree (AST). This AST acts as a foundation for generating type-safe code in various environments.
 
-GraphQL Code Generator is an open-source, automated tool that simplifies the process of generating code from GraphQL schemas and operations. It allows developers to create type-safe code, reducing the risk of runtime errors and improving the overall developer experience.
+The core philosophy of GraphQL Gen is **modularity**. The core library only parses the schema—it does not generate any code by itself. To generate code, you’ll need to install a plugin. Plugins handle transforming the parsed AST into client or server code tailored to your stack (e.g., Apollo Client for Node.js, or other platforms in the future like Rust or Golang).
 
-GraphQL Code Generator is written in GoLang for performance and efficiency. It is designed to work seamlessly with various GraphQL clients, including Apollo Client, Relay, and urql, among others. The tool can generate TypeScript types, React hooks, and even full-fledged components based on your GraphQL schema and queries.
+---
 
-## Understanding the simplified process
+## How It Works
 
-Here is the basic process of how GraphQL Code Generator works:
+Here’s a high-level look at the process:
 
-<Alert type="note" title="Recommendation">
-  We suggest using a hosted GraphQL API for the best experience. We prioritize
-  hosted introspection files over local files. Although it is still possible to
-  use local files, but be aware that the process may be more complex and less
-  efficient.
-</Alert>
+1. **Define Your Schema**
 
-1. **Schema Definition**: You define your GraphQL schema using SDL (Schema Definition Language) or introspection. This schema serves as the foundation for generating code.
+Write your schema using SDL (Schema Definition Language), or point to a GraphQL introspection endpoint.
 
 ```graphql
-type Query {
-  user(id: ID!): User
-}
-
 type User {
   id: ID!
   name: String!
   email: String!
 }
-```
 
-2. **Operations**: You write GraphQL operations (queries, mutations, and subscriptions) that you want to generate code for. These operations can be defined in separate files or inline within your components.
+type Query {
+  user(id: ID!): User
+}
 
-```graphql
-query GetUser($id: ID!) {
-  user(id: $id) {
-    id
-    name
-    email
-  }
+type Mutation {
+  createUser(name: String!, email: String!): User
 }
 ```
 
-3. **Configuration**: You create a configuration file (usually `graphql-generator.conf.json`) that specifies the schema, operations, and desired output format. This file allows you to customize the code generation process according to your needs.
+2. Configure GraphQL Gen
+
+Create a configuration file (graphql-gen.json) that tells GraphQL Gen where to find your schema, where to output generated files, and which plugin to use.
+
+<Alert type="caution" title="Configuration in Progress">
+  The configuration system is still evolving. Expect changes in the structure
+  and behavior of plugins in future versions.
+</Alert>
 
 ```json
 {
-  "schema": "http://localhost:3000/graphql",
-  "output": {
-    "path": "output",
-    "filenames": {
-      "types": "gpl.d.ts",
-      "main": "gpl.ts"
-    }
-  },
-  "language": "typescript",
-  "languages": [
-    { "name": "typescript", "entrypoint": "languages/typescript/main.so" }
-  ]
+  "schema": "http://localhost:4000/graphql",
+  "output": "./src/__generated__/",
+  "plugin": "apollo"
 }
 ```
 
-4. **Code Generation**: You run the GraphQL Code Generator command, which reads the schema and operations, processes them according to the configuration, and generates the desired code. The generated code can include TypeScript types, React hooks, and more.
+3. Generate Code
+
+Run the GraphQL Gen CLI to generate type-safe code based on your schema and operations.
 
 ```bash
-graphql-codegen --config graphql-generator.conf.json
+graphql-gen
 ```
 
-5. **Integration**: You can integrate the generated code into your application. This may involve importing the generated types and hooks into your components, allowing you to use them seamlessly.
+And that's it! You’ll now have a set of generated files tailored to your chosen plugin, ready to use in your application.
 
-```typescript
-import { useGetUserQuery } from "./output/gpl";
+---
 
-const UserProfile = ({ userId }) => {
-  const { data, loading, error } = useGetUserQuery({
-    variables: { id: userId },
-  });
+## ✨ Why Use GraphQL Gen?
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error: {error.message}</p>;
+- 🧩 Plugin-first architecture: Stay lean—only use what you need.
 
-  return (
-    <div>
-      <h1>{data.user.name}</h1>
-      <p>{data.user.email}</p>
-    </div>
-  );
-};
-```
+- ⚡️ Lightweight core: No bloat, no assumptions about your stack.
 
-6. **Development**: As you develop your application, you can continue to add new operations and update your schema. The GraphQL Code Generator can be run again to regenerate the code, ensuring that it stays in sync with your GraphQL API.
+- 🔧 Flexible config: Easily point to schemas and customize output paths.
+
+- 🔌 Extensible via plugins: Add support for different runtimes or frameworks.
+
+- 🦀 Rust-native schema: Core AST is optimized for Rust and performance-critical tooling.

@@ -1,0 +1,30 @@
+# Installation
+
+GraphQL Gen is distributed as a Node.js package for now, with additional distributions planned for Rust, Golang, and other ecosystems in the future.
+
+---
+
+## Node.js Installation
+
+```bash
+npm install -D graphql-gen
+```
+
+or
+
+```bash
+pnpm add -D graphql-gen
+```
+
+Once installed, you can run the generator via your package scripts or directly from the command line:
+
+```bash
+npx graphql-gen
+```
+
+<Alert type="note" title="Note">
+  The core package does not include any plugins. To generate code, you'll need
+  to install a plugin separately. See the{" "}
+  <DocLink to="plugins/overview">Plugin Overview</DocLink> for a list of
+  available plugins and how to use them.
+</Alert>
