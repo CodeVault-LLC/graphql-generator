@@ -9,6 +9,7 @@ pub struct Document {
 pub enum Definition {
     Type(TypeDef),
     Scalar(ScalarDef),
+    Input(TypeDef),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

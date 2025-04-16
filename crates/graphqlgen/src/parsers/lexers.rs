@@ -52,6 +52,7 @@ impl<'a> Lexer<'a> {
             Some('!') => Ok(Token::Bang),
             Some('|') => Ok(Token::Pipe),
             Some('&') => Ok(Token::Ampersand),
+            Some(',') => Ok(Token::Comma),
             Some('.') => {
                 if self.peek() == Some('.') {
                     self.bump();
@@ -64,7 +65,28 @@ impl<'a> Lexer<'a> {
                     bail!("Unexpected character: '.'")
                 }
             }
-            Some('"') => self.read_string(),
+            Some('"') => {
+                if self.peek() == Some('"') {
+                    self.bump();
+                    if self.peek() == Some('"') {
+                        self.bump();
+                        while let Some(c) = self.bump() {
+                            if c == '"' && self.peek() == Some('"') {
+                                self.bump();
+                                if self.peek() == Some('"') {
+                                    self.bump();
+                                    break;
+                                }
+                            }
+                        }
+                        self.next_token()
+                    } else {
+                        bail!("Unexpected character after '\"'")
+                    }
+                } else {
+                    self.read_string()
+                }
+            }
             Some(c) if c.is_alphabetic() || c == '_' => self.read_name_or_keyword(c),
             Some(c) if c.is_digit(10) || c == '-' => self.read_number(c),
             Some('#') => {

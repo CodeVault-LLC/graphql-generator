@@ -22,4 +22,5 @@ pub enum Token {
     Pipe,
     Ampersand,
     EOF,
+    Comma,
 }

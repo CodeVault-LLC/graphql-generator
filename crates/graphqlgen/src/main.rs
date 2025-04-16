@@ -15,6 +15,8 @@ use crate::parsers::common::parse_document;
 use crate::parsers::lexers::Lexer;
 use crate::parsers::token::Token;
 
+use log::{debug, error, info};
+
 #[derive(Debug, Parser)]
 #[command(name = "graphqlgen")]
 #[command(about = "GraphQLGen CLI")]
@@ -24,28 +26,56 @@ struct Cli {
 }
 
 fn main() {
+    // Check if the configuration file for log4rs exists, if not just use default settings
+    if !std::path::Path::new("config/log4rs.yaml").exists() {
+        let stdout = log4rs::append::console::ConsoleAppender::builder().build();
+
+        let settings = log4rs::Config::builder()
+            .appender(log4rs::config::Appender::builder().build("stdout", Box::new(stdout)))
+            .build(
+                log4rs::config::Root::builder()
+                    .appender("stdout")
+                    .build(log::LevelFilter::Info),
+            )
+            .unwrap();
+
+        log4rs::init_config(settings).unwrap();
+    } else {
+        log4rs::init_file("config/log4rs.yaml", Default::default()).unwrap();
+    }
+
     let start = Instant::now();
     let args = Cli::parse();
 
     let plugin = args.plugin.as_deref().unwrap_or(&CONFIG.plugin);
     if plugin.is_empty() {
-        eprintln!("❌ Error: No plugin specified via CLI or config.");
+        error!("Error: No plugin specified via CLI or config.");
         std::process::exit(1);
     }
 
     let schema_content = match CONFIG.schema.as_str() {
         path if path.starts_with("http://") || path.starts_with("https://") => {
-            println!("Using http_parser for HTTP request to {}", path);
+            info!("Using http_parser for remote schema");
             return;
         }
-        path if path.ends_with(".graphql") => {
-            fs::read_to_string(path).unwrap_or_else(|_| panic!("Failed to read: {}", path))
-        }
+        path if path.ends_with(".graphql") => match fs::read_to_string(path) {
+            Ok(content) => {
+                info!("Using graphql_parser for GraphQL schema");
+                content
+            }
+            Err(e) => {
+                error!("Error: Failed to read schema file '{}': {}", path, e);
+                std::process::exit(1);
+            }
+        },
         path if path.ends_with(".json") => {
-            println!("Using json_parser for .json file");
+            info!("Using json_parser for JSON schema");
             return;
         }
-        _ => panic!("Unsupported schema format"),
+        _ => {
+            error!("Error: Unsupported schema format. Please provide a .graphql or .json file.");
+            std::process::exit(1);
+        }
     };
 
     let lexer: Lexer<'_> = Lexer::new(&schema_content);
@@ -54,15 +84,13 @@ fn main() {
             Ok(t) if t != Token::EOF => Some(t),
             Ok(_) => None,
             Err(e) => {
-                eprintln!("Lexer error: {}", e);
+                error!("Lexer error: {}", e);
                 std::process::exit(1);
             }
         })
         .collect();
 
     let parsed_schema = parse_document(tokens).expect("Failed to parse schema");
-
-    println!("Parsed schema: {:#?}", parsed_schema);
 
     {
         let file: File = File::create("test.txt").expect("Failed to create test.txt");
@@ -92,8 +120,9 @@ fn main() {
     let status = child.wait().expect("Plugin execution failed");
 
     if status.success() {
-        println!("✅ Plugin executed successfully in {:.2?}", start.elapsed());
+        info!("Plugin executed successfully in {:.2?}", start.elapsed());
     } else {
-        eprintln!("❌ Plugin failed");
+        error!("Plugin execution failed with status: {}", status);
+        std::process::exit(1);
     }
 }
