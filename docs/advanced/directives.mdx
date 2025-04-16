@@ -1,0 +1,46 @@
+# Directives
+
+A directive is an identifier preceded by a @ character, optionally followed by a list of named arguments, which can appear after almost any form of syntax in the GraphQL query or schema languages.
+
+GraphQL Gen supports parsing directives such as:
+
+```graphql
+type Foo @auth(requires: USER) {
+  field: String!
+}
+
+type Bar {
+  field: String! @auth(requires: USER)
+}
+
+type User {
+  id: ID! @id
+  name: String! @deprecated(reason: "Use `fullName`.")
+}
+```
+
+Directives are used to provide additional metadata about the schema or the fields. They can be used for various purposes, such as authentication, deprecation, or custom validation.
+
+In GraphQL Gen, directives are represented as a list of `Directive` objects. Each `Directive` object contains the following properties:
+
+- `name`: The name of the directive (e.g., `@auth`, `@deprecated`).
+- `arguments`: A list of `Argument` objects representing the arguments passed to the directive. Each `Argument` object contains the following properties:
+  - `name`: The name of the argument (e.g., `requires`, `reason`).
+  - `value`: The value of the argument (e.g., `USER`, `"Use 'fullName'."`).
+- `location`: The location of the directive in the schema (e.g., `FIELD_DEFINITION`, `OBJECT`).
+
+---
+
+## Example
+
+```graphql
+type User @auth(requires: USER) {
+  id: ID! @id
+  name: String! @deprecated(reason: "Use `fullName`.")
+}
+```
+
+## Things not supported yet
+
+- Directives with nested arguments (e.g., `@auth(requires: USER, permissions: { create: true, read: false })`).
+- Directives with complex values (e.g., `@auth(requires: USER, permissions: [ { create: true }, { read: false } ])`).

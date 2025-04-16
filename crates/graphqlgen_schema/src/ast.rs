@@ -21,6 +21,7 @@ pub struct ScalarDef {
 pub struct TypeDef {
     pub name: String,
     pub fields: Vec<Field>,
+    pub directives: Option<Vec<Directive>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -49,7 +50,20 @@ pub enum TypeRef {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum Value {
+    String(String),
+    Bool(bool),
+    Int(i64),
+    Float(f64),
+    Enum(String),
+    Object(Vec<(String, Value)>),
+    List(Vec<Value>),
+    Null,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InputValue {
     pub name: String,
     pub value_type: TypeRef,
+    pub default_value: Option<Value>,
 }

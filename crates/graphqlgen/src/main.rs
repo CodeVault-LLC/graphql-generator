@@ -15,7 +15,7 @@ use crate::parsers::common::parse_document;
 use crate::parsers::lexers::Lexer;
 use crate::parsers::token::Token;
 
-use log::{debug, error, info};
+use log::{error, info};
 
 #[derive(Debug, Parser)]
 #[command(name = "graphqlgen")]

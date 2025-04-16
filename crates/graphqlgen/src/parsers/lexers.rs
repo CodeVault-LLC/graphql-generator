@@ -2,8 +2,6 @@ use super::token::Token;
 use anyhow::{bail, Result};
 
 pub struct Lexer<'a> {
-    src: &'a str,
-    pos: usize,
     chars: std::str::Chars<'a>,
     peeked: Option<char>,
 }
@@ -12,12 +10,7 @@ impl<'a> Lexer<'a> {
     pub fn new(src: &'a str) -> Self {
         let mut chars = src.chars();
         let peeked = chars.next();
-        Self {
-            src,
-            pos: 0,
-            chars,
-            peeked,
-        }
+        Self { chars, peeked }
     }
 
     fn bump(&mut self) -> Option<char> {

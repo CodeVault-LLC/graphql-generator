@@ -93,11 +93,16 @@ mod lexer_tests {
             type User @entity {
                 id: ID!
                 email: String @unique
+                name: String @deprecated(reason: "Use 'fullName' instead")
             }
         "#,
         );
 
         assert!(tokens.contains(&Token::At));
+        assert!(tokens.contains(&Token::Name("entity".to_string())));
+        assert!(tokens.contains(&Token::Name("unique".to_string())));
+        assert!(tokens.contains(&Token::Name("deprecated".to_string())));
+        assert!(tokens.contains(&Token::Name("reason".to_string())));
     }
 
     #[test]

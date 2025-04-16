@@ -15,7 +15,12 @@ pub fn generate_apollo_queries(output_path: &str, ast: &Document) -> Result<(), 
     let mut gql_vars: Vec<String> = Vec::new();
 
     for def in &ast.definitions {
-        if let Definition::Type(TypeDef { name, fields }) = def {
+        if let Definition::Type(TypeDef {
+            name,
+            fields,
+            directives,
+        }) = def
+        {
             if name == "Query" || name == "Mutation" {
                 for field in fields {
                     let gql_var_name: String =
