@@ -6,8 +6,12 @@ use crate::core::common::lexers::Lexer;
 use crate::core::common::token::Token;
 
 use crate::core::document::input;
+use crate::core::document::interface;
 use crate::core::document::scalar;
 use crate::core::document::type_def;
+use crate::core::document::union;
+
+use super::document::enum_def;
 
 pub fn parse_document(tokens: Vec<Token>) -> Result<Document> {
     let mut definitions: Vec<Definition> = Vec::new();
@@ -16,29 +20,35 @@ pub fn parse_document(tokens: Vec<Token>) -> Result<Document> {
     while index < tokens.len() {
         match &tokens[index] {
             Token::Name(name) if name == "type" => {
-                let def = type_def::parse_type(&tokens, &mut index)?;
+                let def: Definition = type_def::parse_type(&tokens, &mut index)?;
                 definitions.push(def);
             }
 
             Token::Name(name) if name == "input" => {
-                let def = input::parse_input(&tokens, &mut index)?;
+                let def: Definition = input::parse_input(&tokens, &mut index)?;
                 definitions.push(def);
             }
 
             Token::Name(name) if name == "scalar" => {
-                let def = scalar::parse_scalar(&tokens, &mut index)?;
+                let def: Definition = scalar::parse_scalar(&tokens, &mut index)?;
                 definitions.push(def);
             }
 
-            /*Token::Name(name) if name == "interface" => {
-                let def = interface::parse_interface(&tokens, &mut index)?;
+            Token::Name(name) if name == "interface" => {
+                let def: Definition = interface::parse_interface(&tokens, &mut index)?;
                 definitions.push(def);
             }
 
             Token::Name(name) if name == "union" => {
-                let def = union::parse_union(&tokens, &mut index)?;
+                let def: Definition = union::parse_union(&tokens, &mut index)?;
                 definitions.push(def);
-            }*/
+            }
+
+            Token::Name(name) if name == "enum" => {
+                let def: Definition = enum_def::parse_enum(&tokens, &mut index)?;
+                definitions.push(def);
+            }
+
             _ => index += 1, // Skip unrelated tokens
         }
     }

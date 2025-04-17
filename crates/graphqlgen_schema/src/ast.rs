@@ -12,6 +12,7 @@ pub enum Definition {
     Input(TypeDef),
     Interface(TypeDef),
     Union(UnionDef),
+    Enum(EnumDef),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -38,11 +39,7 @@ pub struct TypeDef {
 pub struct Field {
     pub name: String,
     pub field_type: TypeRef,
-
-    // For query and mutation fields (optional)
     pub arguments: Option<Vec<InputValue>>,
-
-    // For object fields (optional)
     pub directives: Option<Vec<Directive>>,
 }
 
@@ -59,7 +56,7 @@ pub enum TypeRef {
     List(Box<TypeRef>),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum Value {
     String(String),
     Bool(bool),
@@ -76,4 +73,17 @@ pub struct InputValue {
     pub name: String,
     pub value_type: TypeRef,
     pub default_value: Option<Value>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EnumDef {
+    pub name: String,
+    pub values: Vec<EnumValue>,
+    pub directives: Option<Vec<Directive>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EnumValue {
+    pub name: String,
+    pub directives: Option<Vec<Directive>>,
 }

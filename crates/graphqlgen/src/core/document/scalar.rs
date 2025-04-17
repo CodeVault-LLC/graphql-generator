@@ -1,7 +1,8 @@
 use anyhow::Result;
 use graphqlgen_schema::ast::{Definition, ScalarDef};
 
-use super::common::{expect_name, parse_directives};
+use crate::core::common::parse::{directives::parse_directives, expect::expect_name};
+
 use super::token::Token;
 
 pub fn parse_scalar(tokens: &[Token], index: &mut usize) -> Result<Definition> {

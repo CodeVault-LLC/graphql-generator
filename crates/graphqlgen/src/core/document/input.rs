@@ -1,8 +1,14 @@
 use anyhow::Result;
 use graphqlgen_schema::ast::{Definition, Directive, Field, TypeDef};
 
-use crate::core::common::common::{expect_name, expect_token, parse_directives, parse_fields};
-use crate::core::common::token::Token;
+use crate::core::common::{
+    fields::parse_fields::parse_fields,
+    parse::{
+        directives::parse_directives,
+        expect::{expect_name, expect_token},
+    },
+    token::Token,
+};
 
 pub fn parse_input(tokens: &[Token], index: &mut usize) -> Result<Definition> {
     *index += 1;
@@ -11,7 +17,7 @@ pub fn parse_input(tokens: &[Token], index: &mut usize) -> Result<Definition> {
 
     expect_token(&tokens, index, Token::BraceOpen)?;
 
-    let fields: Vec<Field> = parse_fields(&tokens, index)?;
+    let fields: Vec<Field> = parse_fields(tokens, index)?;
 
     Ok(Definition::Input(TypeDef {
         name: input_name,

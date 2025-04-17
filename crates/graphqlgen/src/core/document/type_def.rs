@@ -1,7 +1,14 @@
 use anyhow::Result;
 use graphqlgen_schema::ast::{Definition, Directive, TypeDef};
 
-use super::common::{expect_name, expect_token, parse_directives, parse_fields};
+use crate::core::common::{
+    fields::parse_fields::parse_fields,
+    parse::{
+        directives::parse_directives,
+        expect::{expect_name, expect_token},
+    },
+};
+
 use super::token::Token;
 
 pub fn parse_type(tokens: &[Token], index: &mut usize) -> Result<Definition> {
