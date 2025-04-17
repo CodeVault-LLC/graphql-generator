@@ -10,11 +10,21 @@ pub enum Definition {
     Type(TypeDef),
     Scalar(ScalarDef),
     Input(TypeDef),
+    Interface(TypeDef),
+    Union(UnionDef),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UnionDef {
+    pub name: String,
+    pub members: Vec<TypeRef>,
+    pub directives: Option<Vec<Directive>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScalarDef {
     pub name: String,
+    pub directives: Option<Vec<Directive>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

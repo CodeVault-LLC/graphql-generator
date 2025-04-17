@@ -1,72 +1,11 @@
 use anyhow::{anyhow, Result};
-use graphqlgen_schema::ast::{
-    Definition, Directive, Document, Field, InputValue, ScalarDef, TypeDef, TypeRef, Value,
-};
+use graphqlgen_schema::ast::{Directive, Field, InputValue, TypeRef, Value};
 use log::{debug, error};
 
-use super::token::Token;
+use crate::core::common::token::Token;
 
-pub fn parse_document(tokens: Vec<Token>) -> Result<Document> {
-    let mut definitions = Vec::new();
-    let mut index = 0;
-
-    while index < tokens.len() {
-        match &tokens[index] {
-            Token::Name(name) if name == "type" => {
-                index += 1;
-                let type_name = expect_name(&tokens, &mut index)?;
-
-                let directives = parse_directives(&tokens, &mut index)?;
-                expect_token(&tokens, &mut index, Token::BraceOpen)?;
-
-                let fields = parse_fields(&tokens, &mut index)?;
-                definitions.push(Definition::Type(TypeDef {
-                    name: type_name,
-                    fields,
-                    directives: if directives.is_empty() {
-                        None
-                    } else {
-                        Some(directives)
-                    },
-                }));
-            }
-
-            Token::Name(name) if name == "input" => {
-                index += 1;
-                let input_name = expect_name(&tokens, &mut index)?;
-
-                let directives = parse_directives(&tokens, &mut index)?;
-                expect_token(&tokens, &mut index, Token::BraceOpen)?;
-
-                let fields = parse_fields(&tokens, &mut index)?;
-                definitions.push(Definition::Input(TypeDef {
-                    name: input_name,
-                    fields,
-                    directives: if directives.is_empty() {
-                        None
-                    } else {
-                        Some(directives)
-                    },
-                }));
-            }
-
-            Token::Name(name) if name == "scalar" => {
-                index += 1;
-                let scalar_name = expect_name(&tokens, &mut index)?;
-                definitions.push(Definition::Scalar(ScalarDef { name: scalar_name }));
-            }
-
-            _ => index += 1, // Skip unrelated tokens
-        }
-    }
-
-    Ok(Document { definitions })
-}
-
-// --- Helpers ---
-
-fn parse_fields(tokens: &[Token], index: &mut usize) -> Result<Vec<Field>> {
-    let mut fields = Vec::new();
+pub fn parse_fields(tokens: &[Token], index: &mut usize) -> Result<Vec<Field>> {
+    let mut fields: Vec<Field> = Vec::new();
 
     while *index < tokens.len() {
         match &tokens[*index] {
@@ -120,7 +59,7 @@ fn parse_fields(tokens: &[Token], index: &mut usize) -> Result<Vec<Field>> {
     Ok(fields)
 }
 
-fn parse_field_arguments(tokens: &[Token], index: &mut usize) -> Result<Vec<Field>> {
+pub fn parse_field_arguments(tokens: &[Token], index: &mut usize) -> Result<Vec<Field>> {
     let mut args = Vec::new();
     *index += 1; // Skip '('
 
@@ -147,7 +86,7 @@ fn parse_field_arguments(tokens: &[Token], index: &mut usize) -> Result<Vec<Fiel
     Ok(args)
 }
 
-fn expect_name(tokens: &[Token], index: &mut usize) -> Result<String> {
+pub fn expect_name(tokens: &[Token], index: &mut usize) -> Result<String> {
     match tokens.get(*index) {
         Some(Token::Name(name)) => {
             *index += 1;
@@ -157,7 +96,7 @@ fn expect_name(tokens: &[Token], index: &mut usize) -> Result<String> {
     }
 }
 
-fn expect_token(tokens: &[Token], index: &mut usize, expected: Token) -> Result<()> {
+pub fn expect_token(tokens: &[Token], index: &mut usize, expected: Token) -> Result<()> {
     match tokens.get(*index) {
         Some(tok) if *tok == expected => {
             *index += 1;
@@ -171,7 +110,7 @@ fn expect_token(tokens: &[Token], index: &mut usize, expected: Token) -> Result<
     }
 }
 
-fn parse_type_ref(tokens: &[Token]) -> Result<(TypeRef, usize)> {
+pub fn parse_type_ref(tokens: &[Token]) -> Result<(TypeRef, usize)> {
     let mut consumed = 0;
 
     let base_type = match tokens.get(consumed) {
@@ -201,7 +140,7 @@ fn parse_type_ref(tokens: &[Token]) -> Result<(TypeRef, usize)> {
     }
 }
 
-fn parse_directives(tokens: &[Token], index: &mut usize) -> Result<Vec<Directive>> {
+pub fn parse_directives(tokens: &[Token], index: &mut usize) -> Result<Vec<Directive>> {
     let mut directives = Vec::new();
 
     while *index < tokens.len() && tokens[*index] == Token::At {
@@ -242,11 +181,15 @@ fn parse_directives(tokens: &[Token], index: &mut usize) -> Result<Vec<Directive
     Ok(directives)
 }
 
-fn parse_value(tokens: &[Token], index: &mut usize) -> Result<Value> {
+pub fn parse_value(tokens: &[Token], index: &mut usize) -> Result<Value> {
     match tokens.get(*index) {
         Some(Token::String(s)) => {
             *index += 1;
             Ok(Value::String(s.clone()))
+        }
+        Some(Token::Int(i)) => {
+            *index += 1;
+            Ok(Value::Int(*i)) // assuming Value::Int(i32) exists in your AST
         }
         Some(Token::Name(n)) if n == "true" || n == "false" => {
             let b = n == "true";

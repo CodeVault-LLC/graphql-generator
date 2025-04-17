@@ -1,37 +1,20 @@
-# Directives
+# Working with Directives in GraphQL Gen
 
-A directive is an identifier preceded by a @ character, optionally followed by a list of named arguments, which can appear after almost any form of syntax in the GraphQL query or schema languages.
+In GraphQL, **directives** are annotations that add extra metadata or behavior to your schema definitions and operations. They are prefixed with `@` and can optionally include arguments.
 
-GraphQL Gen supports parsing directives such as:
-
-```graphql
-type Foo @auth(requires: USER) {
-  field: String!
-}
-
-type Bar {
-  field: String! @auth(requires: USER)
-}
-
-type User {
-  id: ID! @id
-  name: String! @deprecated(reason: "Use `fullName`.")
-}
-```
-
-Directives are used to provide additional metadata about the schema or the fields. They can be used for various purposes, such as authentication, deprecation, or custom validation.
-
-In GraphQL Gen, directives are represented as a list of `Directive` objects. Each `Directive` object contains the following properties:
-
-- `name`: The name of the directive (e.g., `@auth`, `@deprecated`).
-- `arguments`: A list of `Argument` objects representing the arguments passed to the directive. Each `Argument` object contains the following properties:
-  - `name`: The name of the argument (e.g., `requires`, `reason`).
-  - `value`: The value of the argument (e.g., `USER`, `"Use 'fullName'."`).
-- `location`: The location of the directive in the schema (e.g., `FIELD_DEFINITION`, `OBJECT`).
+GraphQL Gen fully supports parsing and representing directives in your schema, preserving them in the generated AST. This enables plugins to interpret and generate custom logic based on directives—for example, to enforce authentication, manage deprecation, or implement validation rules.
 
 ---
 
-## Example
+## 🧠 What Are Directives?
+
+A directive modifies how a part of your schema or query should be handled. They are commonly used for:
+
+- 🔐 **Authorization**: e.g., `@auth(requires: USER)`
+- ⚠️ **Deprecation**: e.g., `@deprecated(reason: "Use fullName.")`
+- 🏷️ **Custom Metadata**: e.g., `@id` to mark a field as a primary identifier
+
+They can be attached to types, fields, input values, interfaces, and more.
 
 ```graphql
 type User @auth(requires: USER) {
@@ -40,7 +23,66 @@ type User @auth(requires: USER) {
 }
 ```
 
-## Things not supported yet
+---
 
-- Directives with nested arguments (e.g., `@auth(requires: USER, permissions: { create: true, read: false })`).
-- Directives with complex values (e.g., `@auth(requires: USER, permissions: [ { create: true }, { read: false } ])`).
+## 🛠 How Directives Work in GraphQL Gen
+
+When GraphQL Gen parses your schema, each directive is captured and stored as part of the AST (Abstract Syntax Tree). You can access directives from within plugins to inform custom generation behavior.
+
+Each directive is represented as a Directive object in the AST, structured as follows:
+
+### `Directive` object structure:
+
+| Field       | Type       | Description                                                                |
+| ----------- | ---------- | -------------------------------------------------------------------------- |
+| `name`      | string     | The name of the directive (e.g., "auth")                                   |
+| `arguments` | Argument[] | A list of name-value pairs passed to the directive                         |
+| `location`  | string     | Where in the schema the directive appears (e.g., OBJECT, FIELD_DEFINITION) |
+
+### `Argument` object structure:
+
+| Field   | Type   | Description               |
+| ------- | ------ | ------------------------- |
+| `name`  | string | The name of the argument  |
+| `value` | string | The value of the argument |
+
+<Alert type="info" title="Note">
+  🧩 Directives are passed to plugins as-is, so plugins can apply their own
+  logic based on the directive metadata.
+</Alert>
+
+---
+
+## ✅ Supported Usage Examples
+
+GraphQL Gen supports common directive use cases out-of-the-box:
+
+```graphql
+type Post @auth(requires: ADMIN) {
+  id: ID! @id
+  title: String!
+  content: String!
+}
+
+type User {
+  name: String! @deprecated(reason: "Use `fullName` instead.")
+}
+```
+
+These directives are parsed and made available in the AST, allowing plugins to generate specific logic (e.g., adding guards to protected fields).
+
+## 🚧 Limitations (For Now)
+
+While GraphQL Gen supports simple directive structures, the following are not yet supported:
+
+- **Nested directive arguments**
+
+```graphql
+@auth(requires: USER, permissions: { create: true, read: false })
+```
+
+- **List of complex values**
+
+```graphql
+@auth(requires: USER, permissions: [ { create: true }, { read: false } ])
+```

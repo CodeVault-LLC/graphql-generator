@@ -9,12 +9,12 @@ pub struct Lexer<'a> {
 impl<'a> Lexer<'a> {
     pub fn new(src: &'a str) -> Self {
         let mut chars = src.chars();
-        let peeked = chars.next();
+        let peeked: Option<char> = chars.next();
         Self { chars, peeked }
     }
 
     fn bump(&mut self) -> Option<char> {
-        let current = self.peeked;
+        let current: Option<char> = self.peeked;
         self.peeked = self.chars.next();
         current
     }

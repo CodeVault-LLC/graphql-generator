@@ -6,16 +6,12 @@ use std::io::{BufWriter, Write};
 use std::process::{Command, Stdio};
 use std::time::Instant;
 
-mod config;
-mod parsers;
+use log::{error, info};
 
+mod config;
 use config::config::CONFIG;
 
-use crate::parsers::common::parse_document;
-use crate::parsers::lexers::Lexer;
-use crate::parsers::token::Token;
-
-use log::{error, info};
+use graphqlgen::core::parse::{generate_tokens, parse_document};
 
 #[derive(Debug, Parser)]
 #[command(name = "graphqlgen")]
@@ -26,7 +22,6 @@ struct Cli {
 }
 
 fn main() {
-    // Check if the configuration file for log4rs exists, if not just use default settings
     if !std::path::Path::new("config/log4rs.yaml").exists() {
         let stdout = log4rs::append::console::ConsoleAppender::builder().build();
 
@@ -78,17 +73,21 @@ fn main() {
         }
     };
 
-    let lexer: Lexer<'_> = Lexer::new(&schema_content);
-    let tokens: Vec<_> = lexer
-        .filter_map(|t: Result<Token, String>| match t {
-            Ok(t) if t != Token::EOF => Some(t),
-            Ok(_) => None,
-            Err(e) => {
-                error!("Lexer error: {}", e);
-                std::process::exit(1);
-            }
-        })
-        .collect();
+    let tokens = match generate_tokens(&schema_content) {
+        Ok(tokens) => tokens,
+        Err(e) => {
+            error!("Error: Failed to generate tokens: {}", e);
+            std::process::exit(1);
+        }
+    };
+
+    {
+        let file: File = File::create("tokens.txt").expect("Failed to create tokens.txt");
+        let mut writer: BufWriter<File> = BufWriter::new(file);
+        for token in &tokens {
+            writeln!(writer, "{:?}", token).expect("Write failed");
+        }
+    }
 
     let parsed_schema = parse_document(tokens).expect("Failed to parse schema");
 

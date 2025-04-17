@@ -1,0 +1,60 @@
+# Working with Scalars in GraphQL Gen
+
+Scalars are the leaf nodes of a GraphQL schema—they represent the most basic units of data like strings, numbers, and booleans. In GraphQL Gen, scalars are fully supported and faithfully preserved in the AST, allowing plugin authors to handle them however they see fit.
+
+GraphQL Gen supports all scalar use cases, from built-in types to fully custom-defined scalars with complex behaviors.
+
+---
+
+## 🧱 Built-in Scalars
+
+GraphQL defines five default scalar types:
+
+| Name      | Description                         |
+| --------- | ----------------------------------- |
+| `Int`     | A 32-bit signed integer             |
+| `Float`   | A double-precision floating-point   |
+| `String`  | A UTF-8 character sequence          |
+| `Boolean` | A true or false value               |
+| `ID`      | A unique identifier, often a string |
+
+These scalars are automatically handled in GraphQL Gen and appear in the AST with no additional setup.
+
+---
+
+## 🧩 Custom Scalars
+
+You can define your own custom scalars for domain-specific data types, such as `DateTime`, `URL`, `Decimal`, or anything else you need.
+
+```graphql
+scalar DateTime
+
+type Event {
+  name: String!
+  start: DateTime!
+}
+```
+
+GraphQL Gen includes full support for parsing, representing, and exposing custom scalars in the AST. It doesn’t assume behavior—your plugin can define how each scalar maps to code in your target language (e.g., mapping `DateTime` to `Date` in TypeScript or `chrono::DateTime` in Rust).
+
+---
+
+## ⚙️ Advanced Use Case
+
+### ✅ Custom scalars with directives
+
+```graphql
+scalar Decimal @precision(scale: 2)
+```
+
+The directive is parsed and preserved just like on any other type. Your plugin can interpret it to adjust serialization, validation, or formatting.
+
+## 📚 Summary
+
+- GraphQL Gen supports all scalar definitions and usages—built-in, custom, annotated, deeply nested—you name it.
+
+- Scalars are represented cleanly in the AST, ready for use by plugin authors.
+
+- Use directives, interfaces, inputs, and even advanced patterns with zero restrictions.
+
+- Plugins are responsible for deciding how to represent each scalar in generated code.

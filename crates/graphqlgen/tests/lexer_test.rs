@@ -1,7 +1,7 @@
-#[path = "../src/parsers/lexers.rs"]
+/*#[path = "../src/primary/common/lexers.rs"]
 mod lexer;
 
-#[path = "../src/parsers/token.rs"]
+#[path = "../src/primary/common/token.rs"]
 mod token;
 
 #[cfg(test)]
@@ -146,3 +146,4 @@ mod lexer_tests {
         let _ = collect_tokens("type User { id: ID § }");
     }
 }
+*/

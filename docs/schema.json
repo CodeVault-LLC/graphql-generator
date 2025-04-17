@@ -31,6 +31,20 @@
           "path": "usage"
         }
       ]
+    },
+    {
+      "title": "Advanced",
+      "path": "advanced",
+      "children": [
+        {
+          "title": "Scalars",
+          "path": "scalars"
+        },
+        {
+          "title": "Directives",
+          "path": "directives"
+        }
+      ]
     }
   ]
 }

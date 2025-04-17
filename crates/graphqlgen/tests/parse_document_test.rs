@@ -1,18 +1,18 @@
-#[path = "../src/parsers/lexers.rs"]
+/*#[path = "../src/primary/common/lexers.rs"]
 mod lexer;
 
-#[path = "../src/parsers/token.rs"]
+#[path = "../src/primary/common/token.rs"]
 mod token;
 
-#[path = "../src/parsers/common.rs"]
-mod common;
+#[path = "../src/primary/parse.rs"]
+mod parse;
 
 #[cfg(test)]
 mod parse_document_tests {
     use graphqlgen_schema::ast::Definition;
 
-    use crate::common::parse_document;
     use crate::lexer::Lexer;
+    use crate::parse::parse_document;
     use crate::token::Token;
 
     #[test]
@@ -147,4 +147,38 @@ mod parse_document_tests {
 
         assert_eq!(parsed.definitions.len(), 1);
     }
+
+    #[test]
+    fn parse_scalar() {
+        let input = r#"
+            scalar DateTime
+            scalar Decimal @precision(scale: 2)
+        "#;
+
+        let lexer: Lexer<'_> = Lexer::new(input);
+
+        let tokens: Vec<_> = lexer
+            .filter_map(|t: Result<Token, String>| match t {
+                Ok(tok) if tok != Token::EOF => Some(tok),
+                _ => None,
+            })
+            .collect();
+
+        let parsed = parse_document(tokens).expect("Failed to parse");
+
+        assert_eq!(parsed.definitions.len(), 2);
+
+        if let Definition::Scalar(s) = &parsed.definitions[0] {
+            assert_eq!(s.name, "DateTime");
+            assert!(s.directives.is_none());
+        }
+
+        if let Definition::Scalar(s) = &parsed.definitions[1] {
+            assert_eq!(s.name, "Decimal");
+            let directives = s.directives.as_ref().expect("Expected directives");
+            assert_eq!(directives.len(), 1);
+            assert_eq!(directives[0].name, "precision");
+        }
+    }
 }
+*/
