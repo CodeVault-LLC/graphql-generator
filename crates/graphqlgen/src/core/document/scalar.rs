@@ -5,10 +5,13 @@ use crate::core::common::parse::{directives::parse_directives, expect::expect_na
 
 use super::token::Token;
 
-pub fn parse_scalar(tokens: &[Token], index: &mut usize) -> Result<Definition> {
+pub fn parse_scalar(
+    tokens: &[Token],
+    index: &mut usize,
+    description: Option<String>,
+) -> Result<Definition> {
     *index += 1;
     let scalar_name = expect_name(&tokens, index)?;
-
     let directives = parse_directives(&tokens, index)?;
 
     Ok(Definition::Scalar(ScalarDef {
@@ -18,6 +21,7 @@ pub fn parse_scalar(tokens: &[Token], index: &mut usize) -> Result<Definition> {
         } else {
             Some(directives)
         },
+        description,
     }))
 }
 
@@ -32,11 +36,16 @@ mod tests {
             Token::Name("Date".to_string()),
         ];
         let mut index = 0;
-        let result = parse_scalar(&tokens, &mut index);
+        let result = parse_scalar(&tokens, &mut index, None);
 
         assert!(result.is_ok());
         let def = result.unwrap();
-        if let Definition::Scalar(ScalarDef { name, directives }) = def {
+        if let Definition::Scalar(ScalarDef {
+            name,
+            directives,
+            description: _,
+        }) = def
+        {
             assert_eq!(name, "Date");
             assert!(directives.is_none());
         } else {
@@ -54,11 +63,16 @@ mod tests {
             Token::Name("deprecated".to_string()),
         ];
         let mut index = 0;
-        let result = parse_scalar(&tokens, &mut index);
+        let result = parse_scalar(&tokens, &mut index, None);
 
         assert!(result.is_ok());
         let def = result.unwrap();
-        if let Definition::Scalar(ScalarDef { name, directives }) = def {
+        if let Definition::Scalar(ScalarDef {
+            name,
+            directives,
+            description: _,
+        }) = def
+        {
             assert_eq!(name, "Date");
             let directives = directives.expect("Expected some directives");
             assert_eq!(directives.len(), 1);
@@ -83,11 +97,16 @@ mod tests {
             Token::ParenClose,
         ];
         let mut index = 0;
-        let result = parse_scalar(&tokens, &mut index);
+        let result = parse_scalar(&tokens, &mut index, None);
 
         assert!(result.is_ok());
         let def = result.unwrap();
-        if let Definition::Scalar(ScalarDef { name, directives }) = def {
+        if let Definition::Scalar(ScalarDef {
+            name,
+            directives,
+            description: _,
+        }) = def
+        {
             assert_eq!(name, "Date");
             let directives = directives.expect("Expected directives");
             assert_eq!(directives.len(), 1);
@@ -112,7 +131,7 @@ mod tests {
             Token::Colon, // Invalid — colon instead of a name
         ];
         let mut index = 0;
-        let result = parse_scalar(&tokens, &mut index);
+        let result = parse_scalar(&tokens, &mut index, None);
 
         assert!(result.is_err());
         let err = result.unwrap_err().to_string();
@@ -127,7 +146,7 @@ mod tests {
             Token::Name("Date".to_string()),
         ];
         let mut index = 0;
-        let result = parse_scalar(&tokens, &mut index);
+        let result = parse_scalar(&tokens, &mut index, None);
 
         assert!(result.is_err(), "Expected Err, got {:?}", result);
         if let Err(err) = result {

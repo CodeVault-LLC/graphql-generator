@@ -5,8 +5,13 @@ use super::token::Token;
 use anyhow::Result;
 use graphqlgen_schema::ast::{Definition, TypeRef, UnionDef};
 
-pub fn parse_union(tokens: &[Token], index: &mut usize) -> Result<Definition> {
+pub fn parse_union(
+    tokens: &[Token],
+    index: &mut usize,
+    description: Option<String>,
+) -> Result<Definition> {
     *index += 1;
+
     let name = expect_name(tokens, index)?;
     expect_token(tokens, index, Token::Equals)?;
 
@@ -28,7 +33,8 @@ pub fn parse_union(tokens: &[Token], index: &mut usize) -> Result<Definition> {
     Ok(Definition::Union(UnionDef {
         name,
         members,
-        directives: None, // extend later if you add directives to unions
+        description,
+        directives: None,
     }))
 }
 
@@ -47,13 +53,14 @@ mod tests {
         ];
 
         let mut index = 0;
-        let result = parse_union(&tokens, &mut index);
+        let result = parse_union(&tokens, &mut index, None);
         assert!(result.is_ok());
 
         if let Definition::Union(UnionDef {
             name,
             members,
             directives,
+            description: _,
         }) = result.unwrap()
         {
             assert_eq!(name, "SearchResult");
@@ -78,7 +85,7 @@ mod tests {
         ];
 
         let mut index = 0;
-        let result = parse_union(&tokens, &mut index);
+        let result = parse_union(&tokens, &mut index, None);
         assert!(result.is_ok());
 
         if let Definition::Union(UnionDef { name, members, .. }) = result.unwrap() {
@@ -103,7 +110,7 @@ mod tests {
         ];
 
         let mut index = 0;
-        let result = parse_union(&tokens, &mut index);
+        let result = parse_union(&tokens, &mut index, None);
         assert!(result.is_ok());
 
         if let Definition::Union(UnionDef { name, members, .. }) = result.unwrap() {
@@ -123,7 +130,7 @@ mod tests {
         ];
 
         let mut index = 0;
-        let result = parse_union(&tokens, &mut index);
+        let result = parse_union(&tokens, &mut index, None);
         assert!(result.is_err());
         let msg = result.unwrap_err().to_string();
         assert!(msg.contains("Expected name"));
@@ -138,7 +145,7 @@ mod tests {
         ];
 
         let mut index = 0;
-        let result = parse_union(&tokens, &mut index);
+        let result = parse_union(&tokens, &mut index, None);
 
         assert!(result.is_err());
         assert!(result
@@ -156,7 +163,7 @@ mod tests {
         ];
 
         let mut index = 0;
-        let result = parse_union(&tokens, &mut index);
+        let result = parse_union(&tokens, &mut index, None);
         assert!(result.is_ok());
 
         if let Definition::Union(UnionDef { members, .. }) = result.unwrap() {
@@ -179,7 +186,7 @@ mod tests {
         ];
 
         let mut index = 0;
-        let result = parse_union(&tokens, &mut index);
+        let result = parse_union(&tokens, &mut index, None);
         assert!(result.is_ok());
 
         if let Definition::Union(UnionDef { members, .. }) = result.unwrap() {
@@ -203,7 +210,7 @@ mod tests {
         ];
 
         let mut index = 0;
-        let result = parse_union(&tokens, &mut index);
+        let result = parse_union(&tokens, &mut index, None);
         assert!(result.is_ok());
 
         if let Definition::Union(UnionDef { members, .. }) = result.unwrap() {

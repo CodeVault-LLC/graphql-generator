@@ -1,5 +1,6 @@
 use crate::core::common::{
     parse::{
+        description::take_description,
         expect::{expect_name, expect_token},
         type_ref::parse_type_ref,
     },
@@ -13,6 +14,8 @@ pub fn parse_field_arguments(tokens: &[Token], index: &mut usize) -> Result<Vec<
     *index += 1; // Skip '('
 
     while *index < tokens.len() && tokens.get(*index) != Some(&Token::ParenClose) {
+        let description = take_description(tokens, index);
+
         let name = expect_name(tokens, index)?;
         expect_token(tokens, index, Token::Colon)?;
         let (arg_type, consumed) = parse_type_ref(&tokens[*index..])?;
@@ -23,6 +26,7 @@ pub fn parse_field_arguments(tokens: &[Token], index: &mut usize) -> Result<Vec<
             field_type: arg_type,
             arguments: None,
             directives: None,
+            description,
         });
 
         // Optional comma

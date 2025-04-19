@@ -11,7 +11,11 @@ use crate::core::common::{
 
 use super::token::Token;
 
-pub fn parse_type(tokens: &[Token], index: &mut usize) -> Result<Definition> {
+pub fn parse_type(
+    tokens: &[Token],
+    index: &mut usize,
+    description: Option<String>,
+) -> Result<Definition> {
     *index += 1;
     let type_name: String = expect_name(&tokens, index)?;
     let directives: Vec<Directive> = parse_directives(&tokens, index)?;
@@ -28,6 +32,7 @@ pub fn parse_type(tokens: &[Token], index: &mut usize) -> Result<Definition> {
         } else {
             Some(directives)
         },
+        description,
     }))
 }
 
@@ -54,7 +59,7 @@ mod tests {
 
         let mut index: usize = 0;
         let result: std::result::Result<Definition, anyhow::Error> =
-            parse_type(&tokens, &mut index);
+            parse_type(&tokens, &mut index, None);
         assert!(result.is_ok(), "Expected Ok, got {:?}", result);
         let definition: Definition = result.unwrap();
 
@@ -102,7 +107,7 @@ mod tests {
 
         let mut index: usize = 0;
         let result: std::result::Result<Definition, anyhow::Error> =
-            parse_type(&tokens, &mut index);
+            parse_type(&tokens, &mut index, None);
         assert!(result.is_err(), "Expected Err, got {:?}", result);
         if let Err(err) = result {
             assert_eq!(
@@ -131,7 +136,7 @@ mod tests {
 
         let mut index: usize = 0;
         let result: std::result::Result<Definition, anyhow::Error> =
-            parse_type(&tokens, &mut index);
+            parse_type(&tokens, &mut index, None);
         assert!(result.is_ok(), "Expected Ok, got {:?}", result);
         let definition: Definition = result.unwrap();
 

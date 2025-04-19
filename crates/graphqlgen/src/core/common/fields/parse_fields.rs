@@ -1,5 +1,8 @@
 use crate::core::common::{
-    parse::{directives::parse_directives, expect::expect_token, type_ref::parse_type_ref},
+    parse::{
+        description::take_description, directives::parse_directives, expect::expect_token,
+        type_ref::parse_type_ref,
+    },
     token::Token,
 };
 use anyhow::{anyhow, Result};
@@ -11,6 +14,8 @@ pub fn parse_fields(tokens: &[Token], index: &mut usize) -> Result<Vec<Field>> {
     let mut fields: Vec<Field> = Vec::new();
 
     while *index < tokens.len() {
+        let description: Option<String> = take_description(tokens, index);
+
         match &tokens[*index] {
             Token::BraceClose => {
                 *index += 1;
@@ -18,10 +23,11 @@ pub fn parse_fields(tokens: &[Token], index: &mut usize) -> Result<Vec<Field>> {
             }
 
             Token::Name(field_name) => {
-                let name = field_name.clone();
+                let name: String = field_name.clone();
                 *index += 1;
 
-                let arguments = if tokens.get(*index) == Some(&Token::ParenOpen) {
+                let arguments: Option<Vec<Field>> = if tokens.get(*index) == Some(&Token::ParenOpen)
+                {
                     Some(parse_field_arguments(tokens, index)?)
                 } else {
                     None
@@ -42,6 +48,7 @@ pub fn parse_fields(tokens: &[Token], index: &mut usize) -> Result<Vec<Field>> {
                                 name: arg.name,
                                 value_type: arg.field_type,
                                 default_value: None,
+                                description: None,
                             })
                             .collect()
                     }),
@@ -50,6 +57,7 @@ pub fn parse_fields(tokens: &[Token], index: &mut usize) -> Result<Vec<Field>> {
                     } else {
                         Some(directives)
                     },
+                    description,
                 });
             }
 

@@ -20,12 +20,14 @@ pub struct UnionDef {
     pub name: String,
     pub members: Vec<TypeRef>,
     pub directives: Option<Vec<Directive>>,
+    pub description: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScalarDef {
     pub name: String,
     pub directives: Option<Vec<Directive>>,
+    pub description: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -33,6 +35,7 @@ pub struct TypeDef {
     pub name: String,
     pub fields: Vec<Field>,
     pub directives: Option<Vec<Directive>>,
+    pub description: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -41,6 +44,7 @@ pub struct Field {
     pub field_type: TypeRef,
     pub arguments: Option<Vec<InputValue>>,
     pub directives: Option<Vec<Directive>>,
+    pub description: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -73,6 +77,7 @@ pub struct InputValue {
     pub name: String,
     pub value_type: TypeRef,
     pub default_value: Option<Value>,
+    pub description: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -80,10 +85,12 @@ pub struct EnumDef {
     pub name: String,
     pub values: Vec<EnumValue>,
     pub directives: Option<Vec<Directive>>,
+    pub description: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EnumValue {
     pub name: String,
     pub directives: Option<Vec<Directive>>,
+    pub description: Option<String>,
 }

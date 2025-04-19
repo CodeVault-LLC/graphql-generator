@@ -23,4 +23,5 @@ pub enum Token {
     Ampersand,
     EOF,
     Comma,
+    Description(String),
 }

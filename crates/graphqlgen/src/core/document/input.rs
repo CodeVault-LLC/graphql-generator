@@ -10,7 +10,11 @@ use crate::core::common::{
     token::Token,
 };
 
-pub fn parse_input(tokens: &[Token], index: &mut usize) -> Result<Definition> {
+pub fn parse_input(
+    tokens: &[Token],
+    index: &mut usize,
+    description: Option<String>,
+) -> Result<Definition> {
     *index += 1;
     let input_name: String = expect_name(&tokens, index)?;
     let directives: Vec<Directive> = parse_directives(&tokens, index)?;
@@ -27,6 +31,7 @@ pub fn parse_input(tokens: &[Token], index: &mut usize) -> Result<Definition> {
         } else {
             Some(directives)
         },
+        description,
     }))
 }
 
@@ -50,7 +55,7 @@ mod tests {
         ];
 
         let mut index: usize = 0;
-        let result: Definition = parse_input(&tokens, &mut index).unwrap();
+        let result: Definition = parse_input(&tokens, &mut index, None).unwrap();
 
         if let Definition::Input(input) = result {
             assert_eq!(input.name, "MyInput");
@@ -72,7 +77,7 @@ mod tests {
         ];
 
         let mut index: usize = 0;
-        let result: Result<Definition> = parse_input(&tokens, &mut index);
+        let result: Result<Definition> = parse_input(&tokens, &mut index, None);
 
         assert!(result.is_ok(), "Expected an error but got: {:?}", result);
     }
@@ -87,7 +92,7 @@ mod tests {
         ];
 
         let mut index: usize = 0;
-        let result: Definition = parse_input(&tokens, &mut index).unwrap();
+        let result: Definition = parse_input(&tokens, &mut index, None).unwrap();
 
         if let Definition::Input(input) = result {
             assert_eq!(input.name, "MyInput");
@@ -118,7 +123,7 @@ mod tests {
         ];
 
         let mut index: usize = 0;
-        let result: Definition = parse_input(&tokens, &mut index).unwrap();
+        let result: Definition = parse_input(&tokens, &mut index, None).unwrap();
 
         if let Definition::Input(input) = result {
             assert_eq!(input.name, "MyInput");

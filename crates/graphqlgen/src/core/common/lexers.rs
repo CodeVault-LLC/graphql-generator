@@ -63,16 +63,7 @@ impl<'a> Lexer<'a> {
                     self.bump();
                     if self.peek() == Some('"') {
                         self.bump();
-                        while let Some(c) = self.bump() {
-                            if c == '"' && self.peek() == Some('"') {
-                                self.bump();
-                                if self.peek() == Some('"') {
-                                    self.bump();
-                                    break;
-                                }
-                            }
-                        }
-                        self.next_token()
+                        return self.read_block_string();
                     } else {
                         bail!("Unexpected character after '\"'")
                     }
@@ -80,6 +71,7 @@ impl<'a> Lexer<'a> {
                     self.read_string()
                 }
             }
+
             Some(c) if c.is_alphabetic() || c == '_' => self.read_name_or_keyword(c),
             Some(c) if c.is_digit(10) || c == '-' => self.read_number(c),
             Some('#') => {
@@ -139,6 +131,26 @@ impl<'a> Lexer<'a> {
         } else {
             Ok(Token::Int(num.parse()?))
         }
+    }
+
+    fn read_block_string(&mut self) -> Result<Token> {
+        let mut content = String::new();
+        loop {
+            match self.bump() {
+                Some('"') if self.peek() == Some('"') => {
+                    self.bump();
+                    if self.peek() == Some('"') {
+                        self.bump();
+                        break;
+                    } else {
+                        content.push('"');
+                    }
+                }
+                Some(c) => content.push(c),
+                None => bail!("Unterminated block string"),
+            }
+        }
+        Ok(Token::Description(content.trim().to_string()))
     }
 }
 

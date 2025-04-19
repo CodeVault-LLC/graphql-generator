@@ -10,7 +10,11 @@ use crate::core::common::{
     token::Token,
 };
 
-pub fn parse_interface(tokens: &[Token], index: &mut usize) -> Result<Definition> {
+pub fn parse_interface(
+    tokens: &[Token],
+    index: &mut usize,
+    description: Option<String>,
+) -> Result<Definition> {
     *index += 1;
     let name = expect_name(tokens, index)?;
     let directives = parse_directives(tokens, index)?;
@@ -26,6 +30,7 @@ pub fn parse_interface(tokens: &[Token], index: &mut usize) -> Result<Definition
         } else {
             Some(directives)
         },
+        description,
     }))
 }
 
@@ -47,13 +52,14 @@ mod tests {
         ];
 
         let mut index = 0;
-        let result = parse_interface(&tokens, &mut index);
+        let result = parse_interface(&tokens, &mut index, None);
         assert!(result.is_ok(), "Expected Ok, got {:?}", result);
 
         if let Definition::Interface(TypeDef {
             name,
             fields,
             directives,
+            description: _,
         }) = result.unwrap()
         {
             assert_eq!(name, "Node");
@@ -89,13 +95,14 @@ mod tests {
         ];
 
         let mut index = 0;
-        let result = parse_interface(&tokens, &mut index);
+        let result = parse_interface(&tokens, &mut index, None);
         assert!(result.is_ok(), "Expected Ok, got {:?}", result);
 
         if let Definition::Interface(TypeDef {
             name,
             fields,
             directives,
+            description: _,
         }) = result.unwrap()
         {
             assert_eq!(name, "Searchable");
@@ -129,7 +136,7 @@ mod tests {
         ];
 
         let mut index = 0;
-        let result = parse_interface(&tokens, &mut index);
+        let result = parse_interface(&tokens, &mut index, None);
         assert!(result.is_ok());
 
         if let Definition::Interface(TypeDef { name, fields, .. }) = result.unwrap() {
@@ -149,7 +156,7 @@ mod tests {
         ];
 
         let mut index = 0;
-        let result = parse_interface(&tokens, &mut index);
+        let result = parse_interface(&tokens, &mut index, None);
         assert!(result.is_err(), "Expected error for missing name");
         let msg = result.unwrap_err().to_string();
         assert!(msg.contains("Expected name"));
@@ -163,7 +170,7 @@ mod tests {
         ];
 
         let mut index = 0;
-        let result = parse_interface(&tokens, &mut index);
+        let result = parse_interface(&tokens, &mut index, None);
         assert!(result.is_err());
         let msg = result.unwrap_err().to_string();
         assert!(msg.contains("Expected BraceOpen, got None"));
@@ -180,7 +187,7 @@ mod tests {
         ];
 
         let mut index = 0;
-        let result = parse_interface(&tokens, &mut index);
+        let result = parse_interface(&tokens, &mut index, None);
         assert!(result.is_err(), "Expected parse failure");
         let msg = result.unwrap_err().to_string();
         assert!(msg.contains("Unexpected token in fields"));
@@ -204,7 +211,7 @@ mod tests {
         ];
 
         let mut index = 0;
-        let result = parse_interface(&tokens, &mut index);
+        let result = parse_interface(&tokens, &mut index, None);
         assert!(result.is_ok());
 
         if let Definition::Interface(TypeDef { name, fields, .. }) = result.unwrap() {

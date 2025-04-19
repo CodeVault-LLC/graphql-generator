@@ -18,7 +18,8 @@ pub fn generate_apollo_queries(output_path: &str, ast: &Document) -> Result<(), 
         if let Definition::Type(TypeDef {
             name,
             fields,
-            directives,
+            directives: _,
+            description: _,
         }) = def
         {
             if name == "Query" || name == "Mutation" {

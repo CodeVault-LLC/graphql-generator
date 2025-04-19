@@ -9,19 +9,19 @@ use super::{
 };
 
 pub fn parse_directives(tokens: &[Token], index: &mut usize) -> Result<Vec<Directive>> {
-    let mut directives = Vec::new();
+    let mut directives: Vec<Directive> = Vec::new();
 
     while *index < tokens.len() && tokens[*index] == Token::At {
         *index += 1;
 
-        let directive_name = expect_name(tokens, index)?;
-        let mut args = Vec::new();
+        let directive_name: String = expect_name(tokens, index)?;
+        let mut args: Vec<InputValue> = Vec::new();
 
         if tokens.get(*index) == Some(&Token::ParenOpen) {
             *index += 1;
 
             while *index < tokens.len() && tokens.get(*index) != Some(&Token::ParenClose) {
-                let name = expect_name(tokens, index)?;
+                let name: String = expect_name(tokens, index)?;
                 expect_token(tokens, index, Token::Colon)?;
 
                 let value = parse_value(tokens, index)?;
@@ -30,6 +30,7 @@ pub fn parse_directives(tokens: &[Token], index: &mut usize) -> Result<Vec<Direc
                     name,
                     value_type: TypeRef::Named("".to_string()),
                     default_value: Some(value),
+                    description: None,
                 });
 
                 if tokens.get(*index) == Some(&Token::Comma) {
